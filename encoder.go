@@ -6,13 +6,15 @@ import (
 	"fmt"
 )
 
+//translator from go basic structure to string
+
 var (
-	boolE   = boolEncoder{}
-	intE    = intEncoder{}
-	unitE   = uintEncoder{}
-	floatE  = floatEncoder{}
-	stringE = stringEncoder{}
-	encoderMap    = map[reflect.Kind]Encoder{
+	boolE      = boolEncoder{}
+	intE       = intEncoder{}
+	unitE      = uintEncoder{}
+	floatE     = floatEncoder{}
+	stringE    = stringEncoder{}
+	encoderMap = map[reflect.Kind]Encoder{
 		reflect.Bool:    boolE,
 		reflect.Int:     intE,
 		reflect.Int8:    intE,
@@ -35,7 +37,7 @@ type Encoder interface {
 	Encode(value reflect.Value) string
 }
 
-type boolEncoder struct {}
+type boolEncoder struct{}
 
 func (e boolEncoder) Encode(value reflect.Value) string {
 	if value.Bool() {
@@ -45,31 +47,31 @@ func (e boolEncoder) Encode(value reflect.Value) string {
 	}
 }
 
-type intEncoder struct {}
+type intEncoder struct{}
 
 func (e intEncoder) Encode(value reflect.Value) string {
 	return strconv.FormatInt(value.Int(), 10)
 }
 
-type uintEncoder struct {}
+type uintEncoder struct{}
 
 func (e uintEncoder) Encode(value reflect.Value) string {
 	return strconv.FormatUint(value.Uint(), 10)
 }
 
-type floatEncoder struct {}
+type floatEncoder struct{}
 
 func (e floatEncoder) Encode(value reflect.Value) string {
 	return strconv.FormatFloat(value.Float(), 'f', -1, 64)
 }
 
-type stringEncoder struct {}
+type stringEncoder struct{}
 
 func (e stringEncoder) Encode(value reflect.Value) string {
 	return value.String()
 }
 
-type commonEncoder struct {}
+type commonEncoder struct{}
 
 func (e commonEncoder) Encode(value reflect.Value) string {
 	return fmt.Sprint(value.Interface())

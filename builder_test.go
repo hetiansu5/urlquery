@@ -15,6 +15,7 @@ type TestInfo struct {
 	Child    Child   `query:"child"`
 	ChildPtr *Child  `query:"childPtr"`
 	Children []Child `query:"children"`
+
 }
 
 func TestMarshal(t *testing.T) {

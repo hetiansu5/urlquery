@@ -2,56 +2,70 @@ package query
 
 import (
 	"reflect"
-	"net/url"
 	"strconv"
 	"sync"
 	"fmt"
 	"bytes"
 )
 
+//Translate from go structure data to a x-www-form-urlencoded form string
+
 type builder struct {
 	output []byte
 	mutex  sync.RWMutex
 	err    error
+	opts   builderOptions
 }
 
-func (q *builder) appendByte(b byte) {
-	q.mutex.Lock()
-	defer q.mutex.Unlock()
-	q.output = append(q.output, b)
+func NewBuilder(opts ...BuilderOption) *builder {
+	b := &builder{}
+	for _, o := range opts {
+		o.apply(&b.opts)
+	}
+	return b
 }
 
-func (q *builder) appendBytes(bytes []byte) {
-	q.mutex.Lock()
-	defer q.mutex.Unlock()
-	q.output = append(q.output, bytes...)
+func (b *builder) appendBytes(bytes []byte) {
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
+	b.output = append(b.output, bytes...)
 }
 
-func (q *builder) appendString(s string) {
-	q.appendBytes([]byte(s))
+func (b *builder) appendString(s string) {
+	b.appendBytes([]byte(s))
 }
 
-func (q *builder) GetBytes() []byte {
-	return bytes.TrimRight(q.output, "&")
+//when finish, get the result string
+func (b *builder) GetBytes() []byte {
+	return bytes.TrimRight(b.output, "&")
 }
 
-func (q *builder) buildQuery(rv reflect.Value, parentNode string) {
-	if q.err != nil {
+//urlEncode
+func (b *builder) urlEncode(s string) string {
+	if b.opts.u != nil {
+		return b.opts.u.Escape(s)
+	}
+	return GetUrlEncoder().Escape(s)
+}
+
+//unknown structure need to be detected and handled correctly
+func (b *builder) buildQuery(rv reflect.Value, parentNode string) {
+	if b.err != nil {
 		return
 	}
 
 	switch rv.Kind() {
 	case reflect.Ptr, reflect.Interface:
 		if !rv.IsNil() {
-			q.buildQuery(rv.Elem(), parentNode)
+			b.buildQuery(rv.Elem(), parentNode)
 		}
 	case reflect.Map:
 		for _, key := range rv.MapKeys() {
-			q.buildQuery(rv.MapIndex(key), genNextParentNode(parentNode, fmt.Sprint(key)))
+			b.buildQuery(rv.MapIndex(key), genNextParentNode(parentNode, fmt.Sprint(key)))
 		}
 	case reflect.Slice, reflect.Array:
 		for i := 0; i < rv.Len(); i++ {
-			q.buildQuery(rv.Index(i), genNextParentNode(parentNode, strconv.Itoa(i)))
+			b.buildQuery(rv.Index(i), genNextParentNode(parentNode, strconv.Itoa(i)))
 		}
 	case reflect.Struct:
 		rt := rv.Type()
@@ -69,32 +83,37 @@ func (q *builder) buildQuery(rv reflect.Value, parentNode string) {
 				}
 			}
 
-			q.buildQuery(rv.Field(i), genNextParentNode(parentNode, key))
+			b.buildQuery(rv.Field(i), genNextParentNode(parentNode, key))
 		}
 	default:
-		q.appendKeyValue(parentNode, rv)
+		b.appendKeyValue(parentNode, rv)
 	}
 }
 
-func (q *builder) appendKeyValue(parentNode string, rv reflect.Value) {
+//basic structure can be translated directly
+func (b *builder) appendKeyValue(parentNode string, rv reflect.Value) {
 	encoder := getEncoder(rv.Kind())
 	if encoder == nil {
-		s, _ := url.QueryUnescape(parentNode);
-		q.err = ErrUnhandledType{key: s, t: rv.Type()}
+		b.err = ErrUnhandledType{typ: rv.Type()}
 		return
 	}
 
-	q.appendString(parentNode + "=" + url.QueryEscape(encoder.Encode(rv)) + "&")
+	b.appendString(parentNode + "=" + b.urlEncode(encoder.Encode(rv)) + "&")
 	return
 }
 
-//HttpBuildQuery
-func Marshal(data interface{}) ([]byte, error) {
-	q := &builder{}
+//encode go structure to string
+func (b *builder) Marshal(data interface{}) ([]byte, error) {
 	rv := reflect.ValueOf(data)
-	q.buildQuery(rv, "")
-	if q.err != nil {
-		return nil, q.err
+	b.buildQuery(rv, "")
+	if b.err != nil {
+		return nil, b.err
 	}
-	return q.GetBytes(), nil
+	return b.GetBytes(), nil
+}
+
+//encode go structure to string
+func Marshal(data interface{}) ([]byte, error) {
+	b := NewBuilder()
+	return b.Marshal(data)
 }

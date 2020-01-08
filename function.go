@@ -5,6 +5,8 @@ import (
 	"reflect"
 )
 
+//common function library
+
 var (
 	accessMapTypes = map[reflect.Kind]bool{
 		reflect.Bool:    true,
@@ -18,6 +20,7 @@ var (
 		reflect.Uint16:  true,
 		reflect.Uint32:  true,
 		reflect.Uint64:  true,
+		reflect.Uintptr: true,
 		reflect.Float32: true,
 		reflect.Float64: true,
 		reflect.String:  true,

@@ -5,28 +5,29 @@ import (
 	"strconv"
 )
 
+//customized error type
+
 type ErrUnhandledType struct {
-	key string
-	t   reflect.Type
+	typ reflect.Type
 }
 
 func (e ErrUnhandledType) Error() string {
-	return "Type(" + e.t.String() + ") of key(" + e.key + ") is unhandled";
+	return "failed to unhandled type(" + e.typ.String() + ")";
 }
 
 type ErrInvalidUnmarshalError struct {
-	Type reflect.Type
+	typ reflect.Type
 }
 
 func (e ErrInvalidUnmarshalError) Error() string {
-	if e.Type == nil {
-		return "query: Unmarshal(nil)"
+	if e.typ == nil {
+		return "failed to unmarshal(nil)"
 	}
 
-	if e.Type.Kind() != reflect.Ptr {
-		return "query: Unmarshal(non-pointer " + e.Type.String() + ")"
+	if e.typ.Kind() != reflect.Ptr {
+		return "failed to unmarshal(non-pointer " + e.typ.String() + ")"
 	}
-	return "query: Unmarshal(nil " + e.Type.String() + ")"
+	return "failed to unmarshal(nil " + e.typ.String() + ")"
 }
 
 type ErrUnsupportedBitSize struct {
@@ -34,5 +35,13 @@ type ErrUnsupportedBitSize struct {
 }
 
 func (e ErrUnsupportedBitSize) Error() string {
-	return "bitSize(" + strconv.Itoa(e.bitSize) + ") is unsupported"
+	return "failed to handle unsupported bitSize(" + strconv.Itoa(e.bitSize) + ")"
+}
+
+type ErrTranslated struct {
+	err error
+}
+
+func (e ErrTranslated) Error() string {
+	return "failed to translate:" + e.err.Error()
 }

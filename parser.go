@@ -7,16 +7,17 @@ import (
 	"bytes"
 )
 
+//translator from a x-www-form-urlencoded form string to go structure
+
 type parser struct {
 	container map[string]string
 	err       error
 }
 
-func newParser(data []byte) *parser {
+func NewParser(data []byte) *parser {
 	p := &parser{
 		container: map[string]string{},
 	}
-	p.init(data)
 	return p
 }
 
@@ -53,12 +54,16 @@ func (p *parser) parse(rv reflect.Value, parentNode string) {
 		//limit condition of map struct
 		//If not meet the condition, will return error
 		if !isAccessMapKeyType(rv.Type().Key().Kind()) || !isAccessMapValueType(rv.Type().Elem().Kind()) {
-			p.err = ErrUnhandledType{key: parentNode, t: rv.Type()}
+			p.err = ErrUnhandledType{typ: rv.Type()}
 			return
 		}
 
 		matches := p.lookup(parentNode)
 		size := len(matches)
+
+		if size == 0 {
+			break
+		}
 
 		mapReflect := reflect.MakeMapWithSize(rv.Type(), size)
 		for k, _ := range matches {
@@ -90,6 +95,9 @@ func (p *parser) parse(rv reflect.Value, parentNode string) {
 		}
 
 		matches := p.lookupForSlice(parentNode)
+		if len(matches) == 0 {
+			break
+		}
 
 		maxCap := 0
 		for i, _ := range matches {
@@ -185,15 +193,21 @@ func (p *parser) get(key string) (string, bool) {
 	return v, ok
 }
 
-func Unmarshal(data []byte, v interface{}) error {
-	p := newParser(data)
-
+//decode string to go structure
+func (p *parser) Unmarshal(data []byte, v interface{}) error {
 	rv := reflect.ValueOf(v)
 	reflect.TypeOf(v)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
-		return ErrInvalidUnmarshalError{reflect.TypeOf(v)}
+		return ErrInvalidUnmarshalError{typ: reflect.TypeOf(v)}
 	}
 
+	p.init(data)
 	p.parse(rv, "")
 	return p.err
+}
+
+//decode string to go structure
+func Unmarshal(data []byte, v interface{}) error {
+	p := NewParser(data)
+	return p.Unmarshal(data, v)
 }

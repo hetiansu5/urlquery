@@ -5,6 +5,8 @@ import (
 	"strconv"
 )
 
+//translator from string to go basic structure
+
 var (
 	DecoderMap = map[reflect.Kind]Decoder{
 		reflect.Bool:    boolDecoder{},
@@ -18,7 +20,7 @@ var (
 		reflect.Uint16:  uintDecoder{16},
 		reflect.Uint32:  uintDecoder{32},
 		reflect.Uint64:  uintDecoder{64},
-		reflect.Uintptr: uintDecoder{},
+		reflect.Uintptr: uintptrDecoder{},
 		reflect.Float32: floatDecoder{32},
 		reflect.Float64: floatDecoder{64},
 		reflect.String:  stringDecoder{},
@@ -34,6 +36,7 @@ type boolDecoder struct{}
 func (e boolDecoder) Decode(value string) (rv reflect.Value, err error) {
 	b, err := strconv.ParseBool(value)
 	if err != nil {
+		err = ErrTranslated{err: err}
 		return
 	}
 	rv = reflect.ValueOf(b)
@@ -47,6 +50,7 @@ type intDecoder struct {
 func (e intDecoder) Decode(value string) (rv reflect.Value, err error) {
 	v, err := strconv.ParseInt(value, 10, e.bitSize)
 	if err != nil {
+		err = ErrTranslated{err: err}
 		return
 	}
 	switch e.bitSize {
@@ -73,6 +77,7 @@ type uintDecoder struct {
 func (e uintDecoder) Decode(value string) (rv reflect.Value, err error) {
 	v, err := strconv.ParseUint(value, 10, e.bitSize)
 	if err != nil {
+		err = ErrTranslated{err: err}
 		return
 	}
 	switch e.bitSize {
@@ -92,6 +97,20 @@ func (e uintDecoder) Decode(value string) (rv reflect.Value, err error) {
 	return
 }
 
+type uintptrDecoder struct {
+	bitSize int
+}
+
+func (e uintptrDecoder) Decode(value string) (rv reflect.Value, err error) {
+	v, err := strconv.ParseUint(value, 10, 0)
+	if err != nil {
+		err = ErrTranslated{err: err}
+		return
+	}
+
+	return reflect.ValueOf(uintptr(v)), nil
+}
+
 type floatDecoder struct {
 	bitSize int
 }
@@ -99,6 +118,7 @@ type floatDecoder struct {
 func (e floatDecoder) Decode(value string) (rv reflect.Value, err error) {
 	v, err := strconv.ParseFloat(value, e.bitSize)
 	if err != nil {
+		err = ErrTranslated{err: err}
 		return
 	}
 	switch e.bitSize {
