@@ -22,10 +22,15 @@ func getUrlEncoder() UrlEncoder {
 
 type UrlEncoder interface {
 	Escape(s string) string
+	UnEscape(s string) (string, error)
 }
 
 type commonUrlEncoder struct{}
 
 func (u commonUrlEncoder) Escape(s string) string {
 	return url.QueryEscape(s)
+}
+
+func (u commonUrlEncoder) UnEscape(s string) (string, error) {
+	return url.QueryUnescape(s)
 }

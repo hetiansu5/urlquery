@@ -10,9 +10,9 @@ import (
 //translator from a x-www-form-urlencoded form string to go structure
 
 type parser struct {
-	container map[string]string
-	err       error
-	opts   options
+	container      map[string]string
+	err            error
+	opts           options
 }
 
 func NewParser(opts ...Option) *parser {
@@ -25,30 +25,42 @@ func NewParser(opts ...Option) *parser {
 	return p
 }
 
-func (p *parser) init(data []byte) {
+func (p *parser) init(data []byte) (err error) {
 	arr := bytes.Split(data, []byte("&"))
 	for _, value := range arr {
 		ns := strings.SplitN(string(value), "=", 2)
 		if len(ns) > 1 {
+			ns[0], err = getUrlEncoder().UnEscape(ns[0])
+			if err != nil {
+				return
+			}
+
+			ns[1], err = getUrlEncoder().UnEscape(ns[1])
+			if err != nil {
+				return
+			}
+
 			p.container[ns[0]] = ns[1]
 		}
 	}
+	return
 }
 
-//urlEncode
-func (p *parser) urlEncode(s string) string {
+
+//get urlEncoder
+func (p *parser) getUrlEncoder() UrlEncoder {
 	if p.opts.urlEncoder != nil {
-		return p.opts.urlEncoder.Escape(s)
+		return p.opts.urlEncoder
 	}
-	return getUrlEncoder().Escape(s)
+	return getUrlEncoder()
 }
 
 //generate next parent node key
 func (p *parser) genNextParentNode(parentNode, key string) string {
 	if len(parentNode) > 0 {
-		return parentNode + p.urlEncode("["+key+"]")
+		return parentNode + "["+key+"]"
 	} else {
-		return p.urlEncode(key)
+		return key
 	}
 }
 
@@ -147,20 +159,27 @@ func (p *parser) parse(rv reflect.Value, parentNode string) {
 		}
 	case reflect.Struct:
 		for i := 0; i < rv.NumField(); i++ {
-			tag := rv.Type().Field(i).Tag.Get("query")
-			key := rv.Type().Field(i).Name
+			ft := rv.Type().Field(i)
 
-			if tag != "" {
-				t := newTag(tag)
-				if t.contains("inputIgnore", "ignore") {
-					continue
-				}
-				if t.getName() != "" {
-					key = t.getName()
-				}
+			//specially handle anonymous fields
+			if ft.Anonymous && rv.Field(i).Kind() == reflect.Struct {
+				p.parse(rv.Field(i), parentNode)
+				continue
 			}
 
-			p.parse(rv.Field(i), p.genNextParentNode(parentNode, key))
+			tag := ft.Tag.Get("query")
+			//all ignore
+			if tag == "-" {
+				continue
+			}
+
+			t := newTag(tag)
+			name := t.getName()
+			if name == "" {
+				name = ft.Name
+			}
+
+			p.parse(rv.Field(i), p.genNextParentNode(parentNode, name))
 		}
 	default:
 		p.parseValue(parentNode, rv)
@@ -231,14 +250,18 @@ func (p *parser) get(key string) (string, bool) {
 }
 
 //decode string to go structure
-func (p *parser) Unmarshal(data []byte, v interface{}) error {
+func (p *parser) Unmarshal(data []byte, v interface{}) (err error) {
 	rv := reflect.ValueOf(v)
 	reflect.TypeOf(v)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return ErrInvalidUnmarshalError{typ: reflect.TypeOf(v)}
 	}
 
-	p.init(data)
+	err = p.init(data)
+	if err != nil {
+		return
+	}
+
 	p.parse(rv, "")
 	return p.err
 }

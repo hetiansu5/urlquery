@@ -13,17 +13,17 @@ func Test_unpackQueryKey_NotEnd(t *testing.T) {
 }
 
 func Test_unpackQueryKey_RightSquareBracketEnd(t *testing.T) {
-	key := "hts%5B0%5D"
+	key := "hts[0]"
 	pre, suf := unpackQueryKey(key)
-	if pre != "hts" || suf != "%5B0%5D" {
+	if pre != "hts" || suf != "[0]" {
 		t.Error("unpack error")
 	}
 }
 
 func Test_unpackQueryKey_LeftSquareBracketEnd(t *testing.T) {
-	key := "%5Bhts%5D%5B0%5D"
+	key := "[hts][0]"
 	pre, suf := unpackQueryKey(key)
-	if pre != "hts" || suf != "%5B0%5D" {
+	if pre != "hts" || suf != "[0]" {
 		t.Error("unpack error")
 	}
 }

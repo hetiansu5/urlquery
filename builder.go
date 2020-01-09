@@ -39,20 +39,20 @@ func (b *builder) GetBytes() []byte {
 	return bytes.TrimRight(b.output, "&")
 }
 
-//urlEncode
-func (b *builder) urlEncode(s string) string {
+//get UrlEncoder
+func (b *builder) getUrlEncoder() UrlEncoder {
 	if b.opts.urlEncoder != nil {
-		return b.opts.urlEncoder.Escape(s)
+		return b.opts.urlEncoder
 	}
-	return getUrlEncoder().Escape(s)
+	return getUrlEncoder()
 }
 
 //generate next parent node key
 func (b *builder) genNextParentNode(parentNode, key string) string {
 	if len(parentNode) > 0 {
-		return parentNode + b.urlEncode("["+key+"]")
+		return parentNode + b.getUrlEncoder().Escape("["+key+"]")
 	} else {
-		return b.urlEncode(key)
+		return b.getUrlEncoder().Escape(key)
 	}
 }
 
@@ -97,21 +97,32 @@ func (b *builder) buildQuery(rv reflect.Value, parentNode string, parentKind ref
 	case reflect.Struct:
 		rt := rv.Type()
 		for i := 0; i < rt.NumField(); i++ {
-			tag := rt.Field(i).Tag.Get("query")
-			key := rt.Field(i).Name
-
-			if tag != "" {
-				t := newTag(tag)
-				if t.contains("outputIgnore", "ignore") {
-					continue
-				}
-				//get the related name
-				if t.getName() != "" {
-					key = t.getName()
-				}
+			ft := rt.Field(i)
+			//unexported
+			if ft.PkgPath != "" && !ft.Anonymous {
+				continue
 			}
 
-			b.buildQuery(rv.Field(i), b.genNextParentNode(parentNode, key), rv.Kind())
+			//specially handle anonymous fields
+			if ft.Anonymous && rv.Field(i).Kind() == reflect.Struct {
+				b.buildQuery(rv.Field(i), parentNode, rv.Kind())
+				continue
+			}
+
+			tag := ft.Tag.Get("query")
+			//all ignore
+			if tag == "-" {
+				continue
+			}
+
+			t := newTag(tag)
+			//get the related name
+			name := t.getName()
+			if name == "" {
+				name = ft.Name
+			}
+
+			b.buildQuery(rv.Field(i), b.genNextParentNode(parentNode, name), rv.Kind())
 		}
 	default:
 		b.appendKeyValue(parentNode, rv, parentKind)
@@ -133,7 +144,7 @@ func (b *builder) appendKeyValue(parentNode string, rv reflect.Value, parentKind
 		return
 	}
 
-	b.appendString(parentNode + "=" + b.urlEncode(s) + "&")
+	b.appendString(parentNode + "=" + b.getUrlEncoder().Escape(s) + "&")
 }
 
 func (b *builder) encode(rv reflect.Value) (s string, err error) {

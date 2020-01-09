@@ -11,11 +11,12 @@ type SimpleChild struct {
 }
 
 type SimpleData struct {
-	Id     int
-	Name   string          `query:"name"`
-	Child  SimpleChild     `query:"c"`
-	Params map[string]int8 `query:"p"`
-	Slice  []SimpleChild
+	Id       int
+	Name     string          `query:"name"`
+	Child    SimpleChild     `query:"c"`
+	Params   map[string]int8 `query:"p"`
+	Slice    []SimpleChild
+	Password string          `query:"-"`
 }
 
 func main() {
@@ -33,6 +34,7 @@ func main() {
 			{Status: true},
 			{Name: "honey"},
 		},
+		Password: "abc",
 	}
 
 	fmt.Println(data)

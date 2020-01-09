@@ -18,7 +18,7 @@ func (o urlEncoderOption) apply(opts *options) {
 }
 
 //support customized urlEncoder option
-func WithUrlEncoderOption(u UrlEncoder) Option {
+func WithUrlEncoder(u UrlEncoder) Option {
 	return urlEncoderOption{urlEncoder: u}
 }
 
@@ -31,6 +31,6 @@ func (o NeedEmptyValueOption) apply(opts *options) {
 //support to control whether to ignore empty value.
 //It just happen to the element directly in strcut, not include map slice array
 //default:false, meaning not to ignore
-func WithNeedEmptyValueOption(c bool) Option {
+func WithNeedEmptyValue(c bool) Option {
 	return NeedEmptyValueOption(c)
 }

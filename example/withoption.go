@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/hetiansu5/urlquery"
 	"fmt"
-	"strings"
+	"net/url"
 )
 
 type OptionChild struct {
@@ -22,9 +22,11 @@ type OptionData struct {
 type SelfUrlEncoder struct{}
 
 func (u SelfUrlEncoder) Escape(s string) string {
-	s = strings.ReplaceAll(s, "[", "%5B")
-	s = strings.ReplaceAll(s, "]", "%5D")
-	return s
+	return url.QueryEscape(s)
+}
+
+func (u SelfUrlEncoder) UnEscape(s string) (string, error) {
+	return url.QueryUnescape(s)
 }
 
 func main() {
@@ -48,8 +50,8 @@ func main() {
 
 	//Marshal: from go structure to http-query string
 
-	builder := urlquery.NewBuilder(urlquery.WithNeedEmptyValueOption(false),
-		urlquery.WithUrlEncoderOption(SelfUrlEncoder{}))
+	builder := urlquery.NewBuilder(urlquery.WithNeedEmptyValue(true),
+		urlquery.WithUrlEncoder(SelfUrlEncoder{}))
 	bytes, err := builder.Marshal(data)
 	if err != nil {
 		fmt.Println(err)
@@ -59,7 +61,7 @@ func main() {
 
 	//Unmarshal: from http-query  string to go structure
 	v := &OptionData{}
-	parser := urlquery.NewParser(urlquery.WithUrlEncoderOption(SelfUrlEncoder{}))
+	parser := urlquery.NewParser(urlquery.WithUrlEncoder(SelfUrlEncoder{}))
 	err = parser.Unmarshal(bytes, v)
 	if err != nil {
 		fmt.Println(err)

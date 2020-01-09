@@ -2,12 +2,13 @@ package urlquery
 
 import (
 	"testing"
+	"fmt"
 )
 
 type BuilderChild struct {
 	Description string `query:"desc"`
-	Long        uint16 `query:" vip"`
-	Height      int    `query:" ignore"`
+	Long        uint16 `query:",vip"`
+	Height      int    `query:"-"`
 }
 
 type BuilderInfo struct {
@@ -48,6 +49,31 @@ func TestMarshal_Array(t *testing.T) {
 
 	if err != nil {
 		t.Error(err)
+	}
+}
+
+type TestPoint struct {
+	X, Y int
+}
+
+type TestCircle struct {
+	TestPoint
+	R int
+}
+
+func TestMarshal_AnonymousFields(t *testing.T) {
+	data := &TestCircle{R: 1}
+	data.TestPoint.X = 12
+	data.TestPoint.Y = 13
+	fmt.Println(data)
+
+	bytes, err := Marshal(data)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if string(bytes) != "X=12&Y=13&R=1" {
+		t.Error("failed to Marshal anonymous fields")
 	}
 }
 

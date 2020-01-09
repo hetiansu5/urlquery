@@ -7,8 +7,8 @@ import (
 
 type TestParseChild struct {
 	Description string `query:"desc"`
-	Long        uint16 `query:" vip"`
-	Height      int    `query:" ignore"`
+	Long        uint16 `query:",vip"`
+	Height      int    `query:"-"`
 }
 
 type TestParseInfo struct {
@@ -133,6 +133,29 @@ func TestUnmarshal_Array(t *testing.T) {
 
 	if arr[1] != 20 || arr[3] != 30 || arr[0] != 0 {
 		t.Error("failed to Unmarshal array")
+	}
+}
+
+type TestParserPoint struct {
+	X, Y int
+}
+
+type TestParserCircle struct {
+	TestParserPoint
+	R int
+}
+
+func TestUnmarshal_AnonymousFields(t *testing.T) {
+	v := &TestParserCircle{}
+	data := "X=12&Y=13&R=1"
+	err := Unmarshal([]byte(data), &v)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if v.X != 12 || v.Y != 13 || v.R != 1 {
+		t.Error("failed to Unmarshal anonymous fields")
 	}
 }
 

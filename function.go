@@ -35,24 +35,22 @@ func isAccessMapValueType(kind reflect.Kind) bool {
 	return isAccessMapKeyType(kind)
 }
 
+//students[0][id] -> students, [0][id]
+//[students][0][id] -> students, [0][id]
 func unpackQueryKey(key string) (pre, suf string) {
-	if len(key) > 3 && key[:3] == "%5B" {
-		key = key[3:]
+	if len(key) > 0 && key[0] == '[' {
+		key = key[1:]
 	}
-	i := 0
-	for i < len(key) {
-		if i+3 <= len(key) {
-			if key[i:i+3] == "%5D" {
-				pre = key[0:i]
-				suf = key[i+3:]
-				return
-			} else if key[i:i+3] == "%5B" {
-				pre = key[0:i]
-				suf = key[i:]
-				return
-			}
+	for i, v := range key {
+		if v == ']' {
+			pre = key[0:i]
+			suf = key[i+1:]
+			return
+		} else if v == '[' {
+			pre = key[0:i]
+			suf = key[i:]
+			return
 		}
-		i++
 	}
 	return key, ""
 }
@@ -74,9 +72,4 @@ func isEmptyValue(v reflect.Value) bool {
 		return v.IsNil()
 	}
 	return false
-}
-
-//Is space character
-func isSpace(c byte) bool {
-	return c == ' ' || c == '\t' || c == '\r' || c == '\n'
 }
