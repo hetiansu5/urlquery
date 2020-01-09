@@ -28,9 +28,9 @@ func (o NeedEmptyValueOption) apply(opts *options) {
 	opts.needEmptyValue = bool(o)
 }
 
-//support to control whether to ignore empty value.
-//It just happen to the element directly in strcut, not include map slice array
-//default:false, meaning not to ignore
+//support to control whether to ignore zero-value.
+//It just happen to the element directly in strcut, not including map slice array
+//default:false, meaning ignore zero-value
 func WithNeedEmptyValue(c bool) Option {
 	return NeedEmptyValueOption(c)
 }

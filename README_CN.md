@@ -1,5 +1,5 @@
 ### 简介
-使用Go语言实现的URL Query字符串编码器和解码器
+使用Go语言实现的URL Query字符串编码器和解码器。写好后才发现官方已有实现的[querystring](https://github.com/google/go-querystring)，但只实现了编码器，没有解码器，且只支持顶层数据结构为结构体，实现上不算特别完善。
 
 - 将URL Query编码的字符串转换为Go数据结构
 - 将Go数据结构转换为URL Query编码的字符串
