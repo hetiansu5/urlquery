@@ -31,6 +31,26 @@ func TestMarshal(t *testing.T) {
 	}
 }
 
+func TestMarshal_Slice(t *testing.T) {
+	data := []string{"a", "b"}
+
+	_, err := Marshal(data)
+
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestMarshal_Array(t *testing.T) {
+	data := [3]int32{10, 200, 50}
+
+	_, err := Marshal(data)
+
+	if err != nil {
+		t.Error(err)
+	}
+}
+
 //benchmark
 //BenchmarkMarshal-4     	  205324	     17514 ns/op
 func BenchmarkMarshal(b *testing.B) {

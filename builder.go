@@ -111,9 +111,11 @@ func (b *builder) buildQuery(rv reflect.Value, parentNode string, parentKind ref
 
 //basic structure can be translated directly
 func (b *builder) appendKeyValue(parentNode string, rv reflect.Value, parentKind reflect.Kind) {
-	//when parent type is struct and ignoreEmptyValue is true, empty value will not been outputted
-	if parentKind == reflect.Struct && b.opts.ignoreEmptyValue && isEmptyValue(rv) {
-		return
+	//when parent type is struct, empty value will be ignored by default. unless needEmptyValue is true.
+	if parentKind == reflect.Struct {
+		if !b.opts.needEmptyValue && isEmptyValue(rv) {
+			return
+		}
 	}
 
 	s, err := b.encode(rv)

@@ -3,7 +3,6 @@ package urlquery
 import (
 	"testing"
 	"strings"
-	"fmt"
 )
 
 type TestParseChild struct {
@@ -94,8 +93,6 @@ func TestUnmarshal_Map(t *testing.T) {
 		t.Error(err)
 	}
 
-	fmt.Println(m)
-
 	if len(m) != 2 {
 		t.Error("length is wrong")
 	}
@@ -107,6 +104,35 @@ func TestUnmarshal_Map(t *testing.T) {
 	}
 	if _, ok3 := m["arr%5B0%5D"]; ok3 {
 		t.Error("map[arr%5B0%5D] should not be exist")
+	}
+}
+
+func TestUnmarshal_Slice(t *testing.T) {
+	var slice []int
+	slice = make([]int, 0)
+	data := "1=20&3=30"
+	err := Unmarshal([]byte(data), &slice)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(slice) != 4 {
+		t.Error("failed to Unmarshal slice")
+	}
+}
+
+func TestUnmarshal_Array(t *testing.T) {
+	var arr [5]int
+	data := "1=20&3=30"
+	err := Unmarshal([]byte(data), &arr)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if arr[1] != 20 || arr[3] != 30 || arr[0] != 0 {
+		t.Error("failed to Unmarshal array")
 	}
 }
 

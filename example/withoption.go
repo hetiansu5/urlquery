@@ -48,7 +48,7 @@ func main() {
 
 	//Marshal: from go structure to http-query string
 
-	builder := urlquery.NewBuilder(urlquery.WithIgnoreEmptyValueOption(true),
+	builder := urlquery.NewBuilder(urlquery.WithNeedEmptyValueOption(false),
 		urlquery.WithUrlEncoderOption(SelfUrlEncoder{}))
 	bytes, err := builder.Marshal(data)
 	if err != nil {

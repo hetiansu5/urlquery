@@ -5,7 +5,6 @@ import (
 	"strings"
 	"strconv"
 	"bytes"
-	"fmt"
 )
 
 //translator from a x-www-form-urlencoded form string to go structure
@@ -66,7 +65,6 @@ func (p *parser) parse(rv reflect.Value, parentNode string) {
 		}
 
 		matches := p.lookup(parentNode)
-		fmt.Println(matches)
 		size := len(matches)
 
 		if size == 0 {

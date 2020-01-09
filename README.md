@@ -12,9 +12,10 @@ x-www-form-urlencoded HTTP-Query URLEncode URL-Query go
     - Basic Structure: Int[8,16,32,64] Uint[8,16,32,64] String Bool Float[32,64] Byte Rune
     - Complex Structure: Array Slice Map Struct
     - Nested Struct with above Basic or Complex Structure
+- Support top-level structure: Map, Slice or Array, not only Struct
 - Support self-defined URL-Encode rule
 - Support self-defined key name relation rule
-- Support enable ignoring encoding Zero-value from struct. It can cut down the length of encoded URL-Query string
+- Support to control whether ignoring Zero-value of struct member. It will cut down the length of encoded URL-Query string
 
 
 ### Quick Start
@@ -82,7 +83,7 @@ func main() {
 
 ### Attention
 - For Map structure, Marshal supports map[Basic]Basic|Complex, but Unmarshal just supports map[Basic]Basic
-- Default: disable ignoring encoding Zero-value of struct member. When it is enabled, consistency should be evaluated in your project
+- Default: ignoring Zero-value of struct member. If you have consistency problem, you can enable it
 - Remember that: Byte is actually uint8, Rune is actually int32
 
 
