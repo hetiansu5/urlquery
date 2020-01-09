@@ -12,11 +12,15 @@ import (
 type parser struct {
 	container map[string]string
 	err       error
+	opts   options
 }
 
-func NewParser() *parser {
+func NewParser(opts ...Option) *parser {
 	p := &parser{
 		container: map[string]string{},
+	}
+	for _, o := range opts {
+		o.apply(&p.opts)
 	}
 	return p
 }
@@ -28,6 +32,23 @@ func (p *parser) init(data []byte) {
 		if len(ns) > 1 {
 			p.container[ns[0]] = ns[1]
 		}
+	}
+}
+
+//urlEncode
+func (p *parser) urlEncode(s string) string {
+	if p.opts.urlEncoder != nil {
+		return p.opts.urlEncoder.Escape(s)
+	}
+	return getUrlEncoder().Escape(s)
+}
+
+//generate next parent node key
+func (p *parser) genNextParentNode(parentNode, key string) string {
+	if len(parentNode) > 0 {
+		return parentNode + p.urlEncode("["+key+"]")
+	} else {
+		return p.urlEncode(key)
 	}
 }
 
@@ -79,7 +100,7 @@ func (p *parser) parse(rv reflect.Value, parentNode string) {
 				return
 			}
 
-			value, ok := p.get(genNextParentNode(parentNode, k))
+			value, ok := p.get(p.genNextParentNode(parentNode, k))
 			if !ok {
 				continue
 			}
@@ -95,7 +116,7 @@ func (p *parser) parse(rv reflect.Value, parentNode string) {
 		rv.Set(mapReflect)
 	case reflect.Array:
 		for i := 0; i < rv.Cap(); i++ {
-			p.parse(rv.Index(i), genNextParentNode(parentNode, strconv.Itoa(i)))
+			p.parse(rv.Index(i), p.genNextParentNode(parentNode, strconv.Itoa(i)))
 		}
 	case reflect.Slice:
 		if !rv.CanSet() {
@@ -122,7 +143,7 @@ func (p *parser) parse(rv reflect.Value, parentNode string) {
 		}
 
 		for i, _ := range matches {
-			p.parse(rv.Index(i), genNextParentNode(parentNode, strconv.Itoa(i)))
+			p.parse(rv.Index(i), p.genNextParentNode(parentNode, strconv.Itoa(i)))
 		}
 	case reflect.Struct:
 		for i := 0; i < rv.NumField(); i++ {
@@ -131,7 +152,7 @@ func (p *parser) parse(rv reflect.Value, parentNode string) {
 
 			if tag != "" {
 				t := newTag(tag)
-				if t.hasFlag("inputIgnore", "ignore") {
+				if t.contains("inputIgnore", "ignore") {
 					continue
 				}
 				if t.getName() != "" {
@@ -139,7 +160,7 @@ func (p *parser) parse(rv reflect.Value, parentNode string) {
 				}
 			}
 
-			p.parse(rv.Field(i), genNextParentNode(parentNode, key))
+			p.parse(rv.Field(i), p.genNextParentNode(parentNode, key))
 		}
 	default:
 		p.parseValue(parentNode, rv)
@@ -181,7 +202,7 @@ func (p *parser) lookup(prefix string) map[string]bool {
 	data := map[string]bool{}
 	for k, _ := range p.container {
 		if strings.HasPrefix(k, prefix) {
-			pre, _ := unpackKey(k[len(prefix):])
+			pre, _ := unpackQueryKey(k[len(prefix):])
 			data[pre] = true
 		}
 	}

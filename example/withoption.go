@@ -59,7 +59,7 @@ func main() {
 
 	//Unmarshal: from http-query  string to go structure
 	v := &OptionData{}
-	parser := urlquery.NewParser()
+	parser := urlquery.NewParser(urlquery.WithUrlEncoderOption(SelfUrlEncoder{}))
 	err = parser.Unmarshal(bytes, v)
 	if err != nil {
 		fmt.Println(err)

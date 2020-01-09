@@ -1,13 +1,13 @@
 package urlquery
 
 type tag struct {
-	name  string
-	flags map[string]struct{}
+	name    string
+	options []string
 }
 
 func newTag(origin string) *tag {
 	t := &tag{}
-	t.flags = map[string]struct{}{}
+	t.options = []string{}
 	t.init(origin)
 	return t
 }
@@ -16,12 +16,13 @@ func (t *tag) getName() string {
 	return t.name
 }
 
-//has flag
-func (t *tag) hasFlag(flags ...string) bool {
-	for _, flag := range flags {
-		_, ok := t.flags[flag]
-		if ok {
-			return true
+//contains
+func (t *tag) contains(options ...string) bool {
+	for _, option := range options {
+		for _, o := range t.options {
+			if o == option {
+				return true
+			}
 		}
 	}
 	return false
@@ -36,7 +37,7 @@ func (t *tag) init(origin string) {
 				if offset-size == 0 {
 					t.name = origin[offset-size : offset]
 				} else {
-					t.flags[origin[offset-size:offset]] = struct{}{}
+					t.options = append(t.options, origin[offset-size:offset])
 				}
 			}
 			size = 0
@@ -45,9 +46,4 @@ func (t *tag) init(origin string) {
 		}
 		offset++
 	}
-}
-
-//is space character?
-func isSpace(c byte) bool {
-	return c == ' ' || c == '\t' || c == '\r' || c == '\n'
 }

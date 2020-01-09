@@ -1,36 +1,36 @@
 package urlquery
 
-type builderOptions struct {
+type options struct {
 	urlEncoder       UrlEncoder
 	needEmptyValue bool
 }
 
-type BuilderOption interface {
-	apply(*builderOptions)
+type Option interface {
+	apply(*options)
 }
 
 type urlEncoderOption struct {
 	urlEncoder UrlEncoder
 }
 
-func (o urlEncoderOption) apply(opts *builderOptions) {
+func (o urlEncoderOption) apply(opts *options) {
 	opts.urlEncoder = o.urlEncoder
 }
 
 //support customized urlEncoder option
-func WithUrlEncoderOption(u UrlEncoder) BuilderOption {
+func WithUrlEncoderOption(u UrlEncoder) Option {
 	return urlEncoderOption{urlEncoder: u}
 }
 
 type NeedEmptyValueOption bool
 
-func (o NeedEmptyValueOption) apply(opts *builderOptions) {
+func (o NeedEmptyValueOption) apply(opts *options) {
 	opts.needEmptyValue = bool(o)
 }
 
 //support to control whether to ignore empty value.
 //It just happen to the element directly in strcut, not include map slice array
 //default:false, meaning not to ignore
-func WithNeedEmptyValueOption(c bool) BuilderOption {
+func WithNeedEmptyValueOption(c bool) Option {
 	return NeedEmptyValueOption(c)
 }

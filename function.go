@@ -1,7 +1,6 @@
 package urlquery
 
 import (
-	"net/url"
 	"reflect"
 )
 
@@ -9,33 +8,34 @@ import (
 
 var (
 	accessMapTypes = map[reflect.Kind]bool{
-		reflect.Bool:      true,
-		reflect.Int:       true,
-		reflect.Int8:      true,
-		reflect.Int16:     true,
-		reflect.Int32:     true,
-		reflect.Int64:     true,
-		reflect.Uint:      true,
-		reflect.Uint8:     true,
-		reflect.Uint16:    true,
-		reflect.Uint32:    true,
-		reflect.Uint64:    true,
-		reflect.Uintptr:   true,
-		reflect.Float32:   true,
-		reflect.Float64:   true,
-		reflect.String:    true,
+		reflect.Bool:    true,
+		reflect.Int:     true,
+		reflect.Int8:    true,
+		reflect.Int16:   true,
+		reflect.Int32:   true,
+		reflect.Int64:   true,
+		reflect.Uint:    true,
+		reflect.Uint8:   true,
+		reflect.Uint16:  true,
+		reflect.Uint32:  true,
+		reflect.Uint64:  true,
+		reflect.Uintptr: true,
+		reflect.Float32: true,
+		reflect.Float64: true,
+		reflect.String:  true,
 	}
 )
 
-func genNextParentNode(parentNode, key string) string {
-	if len(parentNode) > 0 {
-		return parentNode + url.QueryEscape("["+key+"]")
-	} else {
-		return url.QueryEscape(key)
-	}
+func isAccessMapKeyType(kind reflect.Kind) bool {
+	_, ok := accessMapTypes[kind]
+	return ok
 }
 
-func unpackKey(key string) (pre, suf string) {
+func isAccessMapValueType(kind reflect.Kind) bool {
+	return isAccessMapKeyType(kind)
+}
+
+func unpackQueryKey(key string) (pre, suf string) {
 	if len(key) > 3 && key[:3] == "%5B" {
 		key = key[3:]
 	}
@@ -57,15 +57,7 @@ func unpackKey(key string) (pre, suf string) {
 	return key, ""
 }
 
-func isAccessMapKeyType(kind reflect.Kind) bool {
-	_, ok := accessMapTypes[kind]
-	return ok
-}
-
-func isAccessMapValueType(kind reflect.Kind) bool {
-	return isAccessMapKeyType(kind)
-}
-
+//Is Zero-value
 func isEmptyValue(v reflect.Value) bool {
 	switch v.Kind() {
 	case reflect.Array, reflect.Map, reflect.Slice, reflect.String:
@@ -82,4 +74,9 @@ func isEmptyValue(v reflect.Value) bool {
 		return v.IsNil()
 	}
 	return false
+}
+
+//Is space character
+func isSpace(c byte) bool {
+	return c == ' ' || c == '\t' || c == '\r' || c == '\n'
 }

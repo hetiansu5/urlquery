@@ -13,10 +13,10 @@ type builder struct {
 	output []byte
 	mutex  sync.RWMutex
 	err    error
-	opts   builderOptions
+	opts   options
 }
 
-func NewBuilder(opts ...BuilderOption) *builder {
+func NewBuilder(opts ...Option) *builder {
 	b := &builder{}
 	for _, o := range opts {
 		o.apply(&b.opts)
@@ -45,6 +45,15 @@ func (b *builder) urlEncode(s string) string {
 		return b.opts.urlEncoder.Escape(s)
 	}
 	return getUrlEncoder().Escape(s)
+}
+
+//generate next parent node key
+func (b *builder) genNextParentNode(parentNode, key string) string {
+	if len(parentNode) > 0 {
+		return parentNode + b.urlEncode("["+key+"]")
+	} else {
+		return b.urlEncode(key)
+	}
 }
 
 //unknown structure need to be detected and handled correctly
@@ -79,11 +88,11 @@ func (b *builder) buildQuery(rv reflect.Value, parentNode string, parentKind ref
 				return
 			}
 
-			b.buildQuery(rv.MapIndex(key), genNextParentNode(parentNode, keyStr), rv.Kind())
+			b.buildQuery(rv.MapIndex(key), b.genNextParentNode(parentNode, keyStr), rv.Kind())
 		}
 	case reflect.Slice, reflect.Array:
 		for i := 0; i < rv.Len(); i++ {
-			b.buildQuery(rv.Index(i), genNextParentNode(parentNode, strconv.Itoa(i)), rv.Kind())
+			b.buildQuery(rv.Index(i), b.genNextParentNode(parentNode, strconv.Itoa(i)), rv.Kind())
 		}
 	case reflect.Struct:
 		rt := rv.Type()
@@ -93,7 +102,7 @@ func (b *builder) buildQuery(rv reflect.Value, parentNode string, parentKind ref
 
 			if tag != "" {
 				t := newTag(tag)
-				if t.hasFlag("outputIgnore", "ignore") {
+				if t.contains("outputIgnore", "ignore") {
 					continue
 				}
 				//get the related name
@@ -102,7 +111,7 @@ func (b *builder) buildQuery(rv reflect.Value, parentNode string, parentKind ref
 				}
 			}
 
-			b.buildQuery(rv.Field(i), genNextParentNode(parentNode, key), rv.Kind())
+			b.buildQuery(rv.Field(i), b.genNextParentNode(parentNode, key), rv.Kind())
 		}
 	default:
 		b.appendKeyValue(parentNode, rv, parentKind)
