@@ -55,6 +55,19 @@ func unpackQueryKey(key string) (pre, suf string) {
 	return key, ""
 }
 
+//if key like `students[0]` , repack it to `students[]`
+func repackArrayQueryKey(key string) string {
+	l := len(key)
+	if l > 0 && key[l-1] == ']' {
+		for l--; l >= 0; l-- {
+			if key[l] == '[' {
+				return key[:l+1] + "]"
+			}
+		}
+	}
+	return key
+}
+
 //Is Zero-value
 func isEmptyValue(v reflect.Value) bool {
 	switch v.Kind() {

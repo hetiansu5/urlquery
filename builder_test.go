@@ -77,8 +77,7 @@ func TestMarshal_AnonymousFields(t *testing.T) {
 	}
 }
 
-//benchmark
-//BenchmarkMarshal-4     	  205324	     17514 ns/op
+//BenchmarkMarshal-4     	  295726	     11902 ns/op
 func BenchmarkMarshal(b *testing.B) {
 	data := getMockData2()
 

@@ -3,15 +3,13 @@ package urlquery
 import (
 	"reflect"
 	"strconv"
-	"sync"
 	"bytes"
 )
 
 //Translate from go structure data to a x-www-form-urlencoded form string
 
 type builder struct {
-	output []byte
-	mutex  sync.RWMutex
+	buffer *bytes.Buffer
 	err    error
 	opts   options
 }
@@ -21,22 +19,15 @@ func NewBuilder(opts ...Option) *builder {
 	for _, o := range opts {
 		o.apply(&b.opts)
 	}
+	b.buffer = new(bytes.Buffer)
 	return b
 }
 
-func (b *builder) appendBytes(bytes []byte) {
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
-	b.output = append(b.output, bytes...)
-}
-
-func (b *builder) appendString(s string) {
-	b.appendBytes([]byte(s))
-}
-
-//when finish, get the result string
+//when finish, get the result []byte
+//do not forget to remove the last & character
 func (b *builder) GetBytes() []byte {
-	return bytes.TrimRight(b.output, "&")
+	bs := b.buffer.Bytes()
+	return bs[:len(bs)-1]
 }
 
 //get UrlEncoder
@@ -50,9 +41,9 @@ func (b *builder) getUrlEncoder() UrlEncoder {
 //generate next parent node key
 func (b *builder) genNextParentNode(parentNode, key string) string {
 	if len(parentNode) > 0 {
-		return parentNode + b.getUrlEncoder().Escape("["+key+"]")
+		return parentNode + "[" + key + "]"
 	} else {
-		return b.getUrlEncoder().Escape(key)
+		return key
 	}
 }
 
@@ -63,10 +54,6 @@ func (b *builder) buildQuery(rv reflect.Value, parentNode string, parentKind ref
 	}
 
 	switch rv.Kind() {
-	case reflect.Ptr, reflect.Interface:
-		if !rv.IsNil() {
-			b.buildQuery(rv.Elem(), parentNode, rv.Kind())
-		}
 	case reflect.Map:
 		for _, key := range rv.MapKeys() {
 			//If type of key is interface or ptr, check the real element of key
@@ -124,18 +111,25 @@ func (b *builder) buildQuery(rv reflect.Value, parentNode string, parentKind ref
 
 			b.buildQuery(rv.Field(i), b.genNextParentNode(parentNode, name), rv.Kind())
 		}
+	case reflect.Ptr, reflect.Interface:
+		if !rv.IsNil() {
+			b.buildQuery(rv.Elem(), parentNode, parentKind)
+		}
 	default:
 		b.appendKeyValue(parentNode, rv, parentKind)
 	}
 }
 
 //basic structure can be translated directly
-func (b *builder) appendKeyValue(parentNode string, rv reflect.Value, parentKind reflect.Kind) {
-	//when parent type is struct, empty value will be ignored by default. unless needEmptyValue is true.
-	if parentKind == reflect.Struct {
-		if !b.opts.needEmptyValue && isEmptyValue(rv) {
-			return
-		}
+func (b *builder) appendKeyValue(key string, rv reflect.Value, parentKind reflect.Kind) {
+	//If parent type is struct and empty value will be ignored by default. unless needEmptyValue is true.
+	if parentKind == reflect.Struct && !b.opts.needEmptyValue && isEmptyValue(rv) {
+		return
+	}
+
+	//If parent type is slice or array, then repack key. eg. students[0] -> students[]
+	if parentKind == reflect.Slice || parentKind == reflect.Array {
+		key = repackArrayQueryKey(key)
 	}
 
 	s, err := b.encode(rv)
@@ -144,7 +138,7 @@ func (b *builder) appendKeyValue(parentNode string, rv reflect.Value, parentKind
 		return
 	}
 
-	b.appendString(parentNode + "=" + b.getUrlEncoder().Escape(s) + "&")
+	b.buffer.WriteString(b.getUrlEncoder().Escape(key) + "=" + b.getUrlEncoder().Escape(s) + "&")
 }
 
 func (b *builder) encode(rv reflect.Value) (s string, err error) {

@@ -11,18 +11,19 @@ type SimpleChild struct {
 }
 
 type SimpleData struct {
-	Id       int
-	Name     string          `query:"name"`
-	Child    SimpleChild     `query:"c"`
-	Params   map[string]int8 `query:"p"`
-	Slice    []SimpleChild
-	Password string          `query:"-"`
+	Id         int
+	Name       string          `query:"name"`
+	Child      SimpleChild
+	Params     map[string]int8 `query:"p"`
+	SliceChild []SimpleChild   `query:"s"`
+	Password   string          `query:"-"`
+	Array      [3]uint16
 }
 
 func main() {
 	data := SimpleData{
 		Id:   2,
-		Name: "test",
+		Name: "http://localhost/test.php?id=2",
 		Child: SimpleChild{
 			Status: true,
 		},
@@ -30,11 +31,12 @@ func main() {
 			"one": 1,
 			"two": 2,
 		},
-		Slice: []SimpleChild{
+		SliceChild: []SimpleChild{
 			{Status: true},
 			{Name: "honey"},
 		},
 		Password: "abc",
+		Array:    [3]uint16{2, 3, 300},
 	}
 
 	fmt.Println(data)

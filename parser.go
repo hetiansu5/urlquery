@@ -10,9 +10,9 @@ import (
 //translator from a x-www-form-urlencoded form string to go structure
 
 type parser struct {
-	container      map[string]string
-	err            error
-	opts           options
+	container map[string]string
+	err       error
+	opts      options
 }
 
 func NewParser(opts ...Option) *parser {
@@ -40,12 +40,24 @@ func (p *parser) init(data []byte) (err error) {
 				return
 			}
 
+			//If last two characters of key equal `[]`, repack it to `[{i++}]`
+			l := len(ns[0])
+			if l > 2 && ns[0][l-2:] == "[]" {
+				//limit iteration to avoid attack of large or dead circle
+				for i := 0; i < 1000000; i++ {
+					tKey := ns[0][:l-2] + "[" + strconv.Itoa(i) + "]"
+					if _, ok := p.container[tKey]; !ok {
+						ns[0] = tKey
+						break
+					}
+				}
+			}
+
 			p.container[ns[0]] = ns[1]
 		}
 	}
 	return
 }
-
 
 //get urlEncoder
 func (p *parser) getUrlEncoder() UrlEncoder {
@@ -58,7 +70,7 @@ func (p *parser) getUrlEncoder() UrlEncoder {
 //generate next parent node key
 func (p *parser) genNextParentNode(parentNode, key string) string {
 	if len(parentNode) > 0 {
-		return parentNode + "["+key+"]"
+		return parentNode + "[" + key + "]"
 	} else {
 		return key
 	}
