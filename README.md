@@ -15,7 +15,7 @@ x-www-form-urlencoded HTTP-Query URLEncode URL-Query go
 - Support top-level structure: Map, Slice or Array, not only Struct
 - Support self-defined URL-Encode rule
 - Support self-defined key name relation rule
-- Support to control whether ignoring Zero-value of struct member. It will cut down the length of encoded URL-Query string
+- Support to control whether ignoring Zero-value of struct member
 
 
 ### Quick Start
