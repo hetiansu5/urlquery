@@ -1,31 +1,31 @@
-package query
+package urlquery
 
 import "net/url"
 
 //support user-defined global urlEncoder and have default.
 
 var (
-	globalUrlEncoder UrlEncoder
-	commonUrlEncoder CommonUrlEncoder
+	gUrlEncoder UrlEncoder
+	cUrlEncoder commonUrlEncoder
 )
 
 func SetGlobalUrlEncoder(u UrlEncoder) {
-	globalUrlEncoder = u
+	gUrlEncoder = u
 }
 
-func GetUrlEncoder() UrlEncoder {
-	if globalUrlEncoder == nil {
-		return commonUrlEncoder
+func getUrlEncoder() UrlEncoder {
+	if gUrlEncoder == nil {
+		return cUrlEncoder
 	}
-	return globalUrlEncoder
+	return gUrlEncoder
 }
 
 type UrlEncoder interface {
 	Escape(s string) string
 }
 
-type CommonUrlEncoder struct{}
+type commonUrlEncoder struct{}
 
-func (u CommonUrlEncoder) Escape(s string) string {
+func (u commonUrlEncoder) Escape(s string) string {
 	return url.QueryEscape(s)
 }

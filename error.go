@@ -1,4 +1,4 @@
-package query
+package urlquery
 
 import (
 	"reflect"
@@ -44,4 +44,20 @@ type ErrTranslated struct {
 
 func (e ErrTranslated) Error() string {
 	return "failed to translate:" + e.err.Error()
+}
+
+type ErrInvalidMapKeyType struct {
+	typ reflect.Type
+}
+
+func (e ErrInvalidMapKeyType) Error() string {
+	return "failed to handle map key type(" + e.typ.String() + ")"
+}
+
+type ErrInvalidMapValueType struct {
+	typ reflect.Type
+}
+
+func (e ErrInvalidMapValueType) Error() string {
+	return "failed to handle map value type(" + e.typ.String() + ")"
 }

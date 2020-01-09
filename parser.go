@@ -1,10 +1,11 @@
-package query
+package urlquery
 
 import (
 	"reflect"
 	"strings"
 	"strconv"
 	"bytes"
+	"fmt"
 )
 
 //translator from a x-www-form-urlencoded form string to go structure
@@ -14,7 +15,7 @@ type parser struct {
 	err       error
 }
 
-func NewParser(data []byte) *parser {
+func NewParser() *parser {
 	p := &parser{
 		container: map[string]string{},
 	}
@@ -37,7 +38,8 @@ func (p *parser) parse(rv reflect.Value, parentNode string) {
 	}
 
 	switch rv.Kind() {
-	case reflect.Ptr, reflect.Interface:
+	case reflect.Ptr:
+		//If Ptr is nil and can be set, Ptr should be initialized
 		if rv.IsNil() {
 			if rv.CanSet() {
 				rv.Set(reflect.New(rv.Type().Elem()))
@@ -46,19 +48,25 @@ func (p *parser) parse(rv reflect.Value, parentNode string) {
 		} else {
 			p.parse(rv.Elem(), parentNode)
 		}
+	case reflect.Interface:
+		p.parse(rv.Elem(), parentNode)
 	case reflect.Map:
 		if !rv.CanSet() {
 			break
 		}
 
-		//limit condition of map struct
+		//limited condition of map key and value type
 		//If not meet the condition, will return error
-		if !isAccessMapKeyType(rv.Type().Key().Kind()) || !isAccessMapValueType(rv.Type().Elem().Kind()) {
-			p.err = ErrUnhandledType{typ: rv.Type()}
+		if !isAccessMapKeyType(rv.Type().Key().Kind()) {
+			p.err = ErrInvalidMapKeyType{typ: rv.Type().Key()}
+			return
+		} else if !isAccessMapValueType(rv.Type().Elem().Kind()) {
+			p.err = ErrInvalidMapValueType{typ: rv.Type().Elem()}
 			return
 		}
 
 		matches := p.lookup(parentNode)
+		fmt.Println(matches)
 		size := len(matches)
 
 		if size == 0 {
@@ -67,8 +75,9 @@ func (p *parser) parse(rv reflect.Value, parentNode string) {
 
 		mapReflect := reflect.MakeMapWithSize(rv.Type(), size)
 		for k, _ := range matches {
-			reflectKey, err := p.decode(rv.Type().Key().Kind(), k)
+			reflectKey, err := p.decode(rv.Type().Key(), k)
 			if err != nil {
+				p.err = err
 				return
 			}
 
@@ -77,8 +86,9 @@ func (p *parser) parse(rv reflect.Value, parentNode string) {
 				continue
 			}
 
-			reflectValue, err := p.decode(rv.Type().Elem().Kind(), value)
+			reflectValue, err := p.decode(rv.Type().Elem(), value)
 			if err != nil {
+				p.err = err
 				return
 			}
 
@@ -94,11 +104,13 @@ func (p *parser) parse(rv reflect.Value, parentNode string) {
 			break
 		}
 
+		//lookup matched map data with prefix key
 		matches := p.lookupForSlice(parentNode)
 		if len(matches) == 0 {
 			break
 		}
 
+		//get max cap of slice
 		maxCap := 0
 		for i, _ := range matches {
 			if i+1 > maxCap {
@@ -106,6 +118,7 @@ func (p *parser) parse(rv reflect.Value, parentNode string) {
 			}
 		}
 
+		//If slice is nil or cap of slice is less than max cap, slice should be reset correctly
 		if rv.IsNil() || maxCap > rv.Cap() {
 			rv.Set(reflect.MakeSlice(rv.Type(), maxCap, maxCap))
 		}
@@ -120,7 +133,7 @@ func (p *parser) parse(rv reflect.Value, parentNode string) {
 
 			if tag != "" {
 				t := newTag(tag)
-				if t.hasFlag("inputIgnore") || t.hasFlag("ignore") {
+				if t.hasFlag("inputIgnore", "ignore") {
 					continue
 				}
 				if t.getName() != "" {
@@ -145,20 +158,23 @@ func (p *parser) parseValue(parentNode string, rv reflect.Value) {
 		return
 	}
 
-	v, err := p.decode(rv.Kind(), value)
+	v, err := p.decode(rv.Type(), value)
 	if err != nil {
+		p.err = err
 		return
 	}
 
 	rv.Set(v)
 }
 
-func (p *parser) decode(kind reflect.Kind, value string) (v reflect.Value, err error) {
-	decoder := getDecoder(kind)
-	v, err = decoder.Decode(value)
-	if err != nil {
-		p.err = err
+func (p *parser) decode(typ reflect.Type, value string) (v reflect.Value, err error) {
+	decoder := getDecoder(typ.Kind())
+	if decoder == nil {
+		err = ErrUnhandledType{typ: typ}
+		return
 	}
+
+	v, err = decoder.Decode(value)
 	return
 }
 
@@ -180,9 +196,11 @@ func (p *parser) lookupForSlice(prefix string) map[int]bool {
 	data := map[int]bool{}
 	for k, _ := range tmp {
 		i, err := strconv.Atoi(k)
-		if err == nil {
-			data[i] = true
+		if err != nil {
+			p.err = err
+			break
 		}
+		data[i] = true
 	}
 	return data
 }
@@ -208,6 +226,6 @@ func (p *parser) Unmarshal(data []byte, v interface{}) error {
 
 //decode string to go structure
 func Unmarshal(data []byte, v interface{}) error {
-	p := NewParser(data)
+	p := NewParser()
 	return p.Unmarshal(data, v)
 }

@@ -1,24 +1,50 @@
-package query
+package urlquery
 
 import (
 	"testing"
 )
 
-type Child struct {
+type BuilderChild struct {
 	Description string `query:"desc"`
+	Long        uint16 `query:" vip"`
 	Height      int    `query:" ignore"`
 }
 
-type TestInfo struct {
+type BuilderInfo struct {
 	Id       int
-	Name     string  `query:"name"`
-	Child    Child   `query:"child"`
-	ChildPtr *Child  `query:"childPtr"`
-	Children []Child `query:"children"`
-
+	Name     string         `query:"name"`
+	Child    BuilderChild   `query:"child"`
+	ChildPtr *BuilderChild  `query:"childPtr"`
+	Children []BuilderChild `query:"children"`
+	Params   map[string]rune
+	status   bool
+	UintPtr  uintptr
 }
 
 func TestMarshal(t *testing.T) {
+	data := getMockData()
+
+	_, err := Marshal(data)
+
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+//benchmark
+//BenchmarkMarshal-4     	  205324	     17514 ns/op
+func BenchmarkMarshal(b *testing.B) {
+	data := getMockData2()
+
+	for i := 0; i < b.N; i++ {
+		_, err := Marshal(data)
+		if err != nil {
+			b.Error(err)
+		}
+	}
+}
+
+func getMockData() map[string]interface{} {
 	var (
 		f32 = float32(1.2)
 		f64 = float64(13.4343453535343242342)
@@ -26,7 +52,7 @@ func TestMarshal(t *testing.T) {
 		i64 = int64(9999999 * 9999999)
 		u64 = uint16(567)
 	)
-	params := map[string]interface{}{
+	return map[string]interface{}{
 		"id":     1,
 		"fit":    true,
 		"vip":    false,
@@ -39,25 +65,33 @@ func TestMarshal(t *testing.T) {
 		"map": map[interface{}]interface{}{
 			"caption": "test",
 			5:         []int{11, 22},
-			"child": TestInfo{
-				Name: "child",
-				Children: []Child{
-					{Description: "d1", Height: 180},
-					{Description: "d2"},
-				},
-				Child:    Child{Description: "c1"},
-				ChildPtr: &Child{Description: "cptr"},
-			},
+			"child":   getMockData2(),
 		},
-		"struct": TestInfo{
+		"struct": BuilderInfo{
 			Id:   222,
 			Name: "test",
 		},
 	}
+}
 
-	_, err := Marshal(params)
-
-	if err != nil {
-		t.Error(err)
+func getMockData2() BuilderInfo {
+	return BuilderInfo{
+		Name: "child",
+		Children: []BuilderChild{
+			{Description: "d1", Height: 180},
+			{Description: "d2", Long: 140},
+			{Description: "d4"},
+			{Description: "d5", Long: 1, Height: 20},
+			{Description: "d6"},
+		},
+		Child:    BuilderChild{Description: "c1"},
+		ChildPtr: &BuilderChild{Description: "cptr", Long: 14, Height: 220},
+		Params: map[string]rune{
+			"abc":      111,
+			"bbb":      222,
+			"whoIsWho": 344340,
+		},
+		status:  true,
+		UintPtr: uintptr(222),
 	}
 }

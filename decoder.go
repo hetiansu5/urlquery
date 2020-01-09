@@ -1,4 +1,4 @@
-package query
+package urlquery
 
 import (
 	"reflect"
@@ -8,7 +8,7 @@ import (
 //translator from string to go basic structure
 
 var (
-	DecoderMap = map[reflect.Kind]Decoder{
+	decoderMap = map[reflect.Kind]decoder{
 		reflect.Bool:    boolDecoder{},
 		reflect.Int:     intDecoder{},
 		reflect.Int8:    intDecoder{8},
@@ -27,7 +27,7 @@ var (
 	}
 )
 
-type Decoder interface {
+type decoder interface {
 	Decode(value string) (reflect.Value, error)
 }
 
@@ -138,8 +138,8 @@ func (e stringDecoder) Decode(value string) (rv reflect.Value, err error) {
 	return reflect.ValueOf(value), nil
 }
 
-func getDecoder(kind reflect.Kind) Decoder {
-	if Decoder, ok := DecoderMap[kind]; ok {
+func getDecoder(kind reflect.Kind) decoder {
+	if Decoder, ok := decoderMap[kind]; ok {
 		return Decoder
 	} else {
 		return nil

@@ -1,9 +1,8 @@
-package query
+package urlquery
 
 import (
 	"reflect"
 	"strconv"
-	"fmt"
 )
 
 //translator from go basic structure to string
@@ -14,7 +13,7 @@ var (
 	unitE      = uintEncoder{}
 	floatE     = floatEncoder{}
 	stringE    = stringEncoder{}
-	encoderMap = map[reflect.Kind]Encoder{
+	encoderMap = map[reflect.Kind]encoder{
 		reflect.Bool:    boolE,
 		reflect.Int:     intE,
 		reflect.Int8:    intE,
@@ -33,7 +32,7 @@ var (
 	}
 )
 
-type Encoder interface {
+type encoder interface {
 	Encode(value reflect.Value) string
 }
 
@@ -71,13 +70,7 @@ func (e stringEncoder) Encode(value reflect.Value) string {
 	return value.String()
 }
 
-type commonEncoder struct{}
-
-func (e commonEncoder) Encode(value reflect.Value) string {
-	return fmt.Sprint(value.Interface())
-}
-
-func getEncoder(kind reflect.Kind) Encoder {
+func getEncoder(kind reflect.Kind) encoder {
 	if encoder, ok := encoderMap[kind]; ok {
 		return encoder
 	} else {
