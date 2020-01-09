@@ -68,6 +68,15 @@ func repackArrayQueryKey(key string) string {
 	return key
 }
 
+//generate next parent node key
+func genNextParentNode(parentNode, key string) string {
+	if len(parentNode) > 0 {
+		return parentNode + "[" + key + "]"
+	} else {
+		return key
+	}
+}
+
 //Is Zero-value
 func isEmptyValue(v reflect.Value) bool {
 	switch v.Kind() {

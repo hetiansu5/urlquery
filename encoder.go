@@ -3,77 +3,163 @@ package urlquery
 import (
 	"reflect"
 	"strconv"
+	"bytes"
 )
 
-//translator from go basic structure to string
+//encoder from go structure data to URL Query string
 
-var (
-	boolE      = boolEncoder{}
-	intE       = intEncoder{}
-	unitE      = uintEncoder{}
-	floatE     = floatEncoder{}
-	stringE    = stringEncoder{}
-	encoderMap = map[reflect.Kind]encoder{
-		reflect.Bool:    boolE,
-		reflect.Int:     intE,
-		reflect.Int8:    intE,
-		reflect.Int16:   intE,
-		reflect.Int32:   intE,
-		reflect.Int64:   intE,
-		reflect.Uint:    unitE,
-		reflect.Uint8:   unitE,
-		reflect.Uint16:  unitE,
-		reflect.Uint32:  unitE,
-		reflect.Uint64:  unitE,
-		reflect.Uintptr: unitE,
-		reflect.Float32: floatE,
-		reflect.Float64: floatE,
-		reflect.String:  stringE,
+type encoder struct {
+	buffer *bytes.Buffer
+	err    error
+	opts   options
+}
+
+func NewEncoder(opts ...Option) *encoder {
+	b := &encoder{}
+	for _, o := range opts {
+		o.apply(&b.opts)
 	}
-)
-
-type encoder interface {
-	Encode(value reflect.Value) string
+	b.buffer = new(bytes.Buffer)
+	return b
 }
 
-type boolEncoder struct{}
+//when finish, get the result []byte
+//do not forget to remove the last & character
+func (b *encoder) GetBytes() []byte {
+	bs := b.buffer.Bytes()
+	return bs[:len(bs)-1]
+}
 
-func (e boolEncoder) Encode(value reflect.Value) string {
-	if value.Bool() {
-		return "1"
-	} else {
-		return "0"
+//get UrlEncoder
+func (b *encoder) getUrlEncoder() UrlEncoder {
+	if b.opts.urlEncoder != nil {
+		return b.opts.urlEncoder
+	}
+	return getUrlEncoder()
+}
+
+//generate next parent node key
+func (b *encoder) genNextParentNode(parentNode, key string) string {
+	return genNextParentNode(parentNode, key)
+}
+
+//unknown structure need to be detected and handled correctly
+func (b *encoder) buildQuery(rv reflect.Value, parentNode string, parentKind reflect.Kind) {
+	if b.err != nil {
+		return
+	}
+
+	switch rv.Kind() {
+	case reflect.Map:
+		for _, key := range rv.MapKeys() {
+			//If type of key is interface or ptr, check the real element of key
+			checkKey := key
+			if key.Kind() == reflect.Interface || key.Kind() == reflect.Ptr {
+				checkKey = checkKey.Elem()
+			}
+
+			//limited condition of map key type
+			if !isAccessMapKeyType(checkKey.Kind()) {
+				b.err = ErrInvalidMapKeyType{typ: checkKey.Type()}
+				return
+			}
+
+			//encode key structure to string
+			keyStr, err := b.encode(checkKey)
+			if err != nil {
+				b.err = err
+				return
+			}
+
+			b.buildQuery(rv.MapIndex(key), b.genNextParentNode(parentNode, keyStr), rv.Kind())
+		}
+	case reflect.Slice, reflect.Array:
+		for i := 0; i < rv.Len(); i++ {
+			b.buildQuery(rv.Index(i), b.genNextParentNode(parentNode, strconv.Itoa(i)), rv.Kind())
+		}
+	case reflect.Struct:
+		rt := rv.Type()
+		for i := 0; i < rt.NumField(); i++ {
+			ft := rt.Field(i)
+			//unexported
+			if ft.PkgPath != "" && !ft.Anonymous {
+				continue
+			}
+
+			//specially handle anonymous fields
+			if ft.Anonymous && rv.Field(i).Kind() == reflect.Struct {
+				b.buildQuery(rv.Field(i), parentNode, rv.Kind())
+				continue
+			}
+
+			tag := ft.Tag.Get("query")
+			//all ignore
+			if tag == "-" {
+				continue
+			}
+
+			t := newTag(tag)
+			//get the related name
+			name := t.getName()
+			if name == "" {
+				name = ft.Name
+			}
+
+			b.buildQuery(rv.Field(i), b.genNextParentNode(parentNode, name), rv.Kind())
+		}
+	case reflect.Ptr, reflect.Interface:
+		if !rv.IsNil() {
+			b.buildQuery(rv.Elem(), parentNode, parentKind)
+		}
+	default:
+		b.appendKeyValue(parentNode, rv, parentKind)
 	}
 }
 
-type intEncoder struct{}
-
-func (e intEncoder) Encode(value reflect.Value) string {
-	return strconv.FormatInt(value.Int(), 10)
-}
-
-type uintEncoder struct{}
-
-func (e uintEncoder) Encode(value reflect.Value) string {
-	return strconv.FormatUint(value.Uint(), 10)
-}
-
-type floatEncoder struct{}
-
-func (e floatEncoder) Encode(value reflect.Value) string {
-	return strconv.FormatFloat(value.Float(), 'f', -1, 64)
-}
-
-type stringEncoder struct{}
-
-func (e stringEncoder) Encode(value reflect.Value) string {
-	return value.String()
-}
-
-func getEncoder(kind reflect.Kind) encoder {
-	if encoder, ok := encoderMap[kind]; ok {
-		return encoder
-	} else {
-		return nil
+//basic structure can be translated directly
+func (b *encoder) appendKeyValue(key string, rv reflect.Value, parentKind reflect.Kind) {
+	//If parent type is struct and empty value will be ignored by default. unless needEmptyValue is true.
+	if parentKind == reflect.Struct && !b.opts.needEmptyValue && isEmptyValue(rv) {
+		return
 	}
+
+	//If parent type is slice or array, then repack key. eg. students[0] -> students[]
+	if parentKind == reflect.Slice || parentKind == reflect.Array {
+		key = repackArrayQueryKey(key)
+	}
+
+	s, err := b.encode(rv)
+	if err != nil {
+		b.err = err
+		return
+	}
+
+	b.buffer.WriteString(b.getUrlEncoder().Escape(key) + "=" + b.getUrlEncoder().Escape(s) + "&")
+}
+
+func (b *encoder) encode(rv reflect.Value) (s string, err error) {
+	encoder := getEncoder(rv.Kind())
+	if encoder == nil {
+		err = ErrUnhandledType{typ: rv.Type()}
+		return
+	}
+
+	s = encoder.Encode(rv)
+	return
+}
+
+//encode go structure to string
+func (b *encoder) Marshal(data interface{}) ([]byte, error) {
+	rv := reflect.ValueOf(data)
+	b.buildQuery(rv, "", reflect.Interface)
+	if b.err != nil {
+		return nil, b.err
+	}
+	return b.GetBytes(), nil
+}
+
+//encode go structure to string
+func Marshal(data interface{}) ([]byte, error) {
+	b := NewEncoder()
+	return b.Marshal(data)
 }

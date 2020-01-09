@@ -51,3 +51,13 @@ func Test_repackArrayQueryKey2(t *testing.T) {
 		t.Error("failed to execute repackArrayQueryKey funtion")
 	}
 }
+
+func Test_genNextParentNode(t *testing.T) {
+	if genNextParentNode("", "test") != "test" {
+		t.Error("failed to execute genNextParentNode")
+	}
+
+	if genNextParentNode("p", "test") != "p[test]" {
+		t.Error("failed to execute genNextParentNode")
+	}
+}

@@ -8,7 +8,7 @@ import (
 //translator from string to go basic structure
 
 var (
-	decoderMap = map[reflect.Kind]decoder{
+	decoderMap = map[reflect.Kind]valueDecoder{
 		reflect.Bool:    boolDecoder{},
 		reflect.Int:     intDecoder{},
 		reflect.Int8:    intDecoder{8},
@@ -27,7 +27,7 @@ var (
 	}
 )
 
-type decoder interface {
+type valueDecoder interface {
 	Decode(value string) (reflect.Value, error)
 }
 
@@ -138,9 +138,9 @@ func (e stringDecoder) Decode(value string) (rv reflect.Value, err error) {
 	return reflect.ValueOf(value), nil
 }
 
-func getDecoder(kind reflect.Kind) decoder {
-	if Decoder, ok := decoderMap[kind]; ok {
-		return Decoder
+func getDecoder(kind reflect.Kind) valueDecoder {
+	if decoder, ok := decoderMap[kind]; ok {
+		return decoder
 	} else {
 		return nil
 	}

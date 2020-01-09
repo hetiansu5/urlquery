@@ -69,11 +69,7 @@ func (p *parser) getUrlEncoder() UrlEncoder {
 
 //generate next parent node key
 func (p *parser) genNextParentNode(parentNode, key string) string {
-	if len(parentNode) > 0 {
-		return parentNode + "[" + key + "]"
-	} else {
-		return key
-	}
+	return genNextParentNode(parentNode, key)
 }
 
 func (p *parser) parse(rv reflect.Value, parentNode string) {
