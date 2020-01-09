@@ -1,8 +1,8 @@
 ### 简介
-使用Go语言实现的application/x-www-form-urlencoded协议数据的转换器。
+使用Go语言实现的URL Query字符串编码器和解码器
 
-- 将x-www-form-urlencoded编码的字符串转换为Go数据结构
-- 将Go语言数据结构转换为x-www-form-urlencoded编码的字符串
+- 将URL Query编码的字符串转换为Go数据结构
+- 将Go数据结构转换为URL Query编码的字符串
 
 ### 关键词
 x-www-form-urlencoded HTTP-Query URLEncode URL-Query go

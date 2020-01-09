@@ -1,8 +1,8 @@
 ### Introduce
-An application/x-www-form-urlencoded query translator by go.
+A URL Query string Encoder and Parser by go.
 
-- Translate from a x-www-form-urlencoded query string to go structure
-- Translate from go structure to a x-www-form-urlencoded query string
+- Parse from URL Query string to go structure
+- Encode from go structure to URL Query string
 
 ### Keywords
 x-www-form-urlencoded HTTP-Query URLEncode URL-Query go
