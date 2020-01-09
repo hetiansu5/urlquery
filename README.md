@@ -14,7 +14,7 @@ x-www-form-urlencoded HTTP-Query URLEncode URL-Query go
     - Nested Struct with above Basic or Complex Structure
 - Support self-defined URL-Encode rule
 - Support self-defined key name relation rule
-- Support enable ignoring encoding Zero-value from struct. It can cut down the length of the encoded URL-Query string
+- Support enable ignoring encoding Zero-value from struct. It can cut down the length of encoded URL-Query string
 
 
 ### Quick Start
