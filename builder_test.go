@@ -32,23 +32,49 @@ func TestMarshal(t *testing.T) {
 	}
 }
 
-func TestMarshal_Slice(t *testing.T) {
-	data := []string{"a", "b"}
+func TestMarshal_Struct(t *testing.T) {
+	data := getMockData2()
 
-	_, err := Marshal(data)
+	bytes, err := Marshal(data)
 
 	if err != nil {
 		t.Error(err)
+	}
+
+	v := BuilderInfo{}
+	Unmarshal(bytes, &v)
+
+	if v.Name != "child" || v.status != false || v.Child.Height != 0 || len(v.Children) != 5 {
+		fmt.Println(v.Name, v.status, v.Child.Height, v.Children)
+		t.Error("Marshal Unmarshal is not equal")
+	}
+}
+
+func TestMarshal_Slice(t *testing.T) {
+	data := []string{"a", "b"}
+
+	bytes, err := Marshal(data)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if string(bytes) != "0=a&1=b" {
+		t.Error("failed to Marchal slice")
 	}
 }
 
 func TestMarshal_Array(t *testing.T) {
 	data := [3]int32{10, 200, 50}
 
-	_, err := Marshal(data)
+	bytes, err := Marshal(data)
 
 	if err != nil {
 		t.Error(err)
+	}
+
+	if string(bytes) != "0=10&1=200&2=50" {
+		t.Error("failed to Marchal slice")
 	}
 }
 
@@ -65,7 +91,6 @@ func TestMarshal_AnonymousFields(t *testing.T) {
 	data := &TestCircle{R: 1}
 	data.TestPoint.X = 12
 	data.TestPoint.Y = 13
-	fmt.Println(data)
 
 	bytes, err := Marshal(data)
 	if err != nil {
@@ -129,7 +154,7 @@ func getMockData2() BuilderInfo {
 			{Description: "d5", Long: 1, Height: 20},
 			{Description: "d6"},
 		},
-		Child:    BuilderChild{Description: "c1"},
+		Child:    BuilderChild{Description: "c1", Height: 20},
 		ChildPtr: &BuilderChild{Description: "cptr", Long: 14, Height: 220},
 		Params: map[string]rune{
 			"abc":      111,
