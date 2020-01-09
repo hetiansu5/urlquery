@@ -16,9 +16,7 @@ type parser struct {
 }
 
 func NewParser(opts ...Option) *parser {
-	p := &parser{
-		container: map[string]string{},
-	}
+	p := &parser{}
 	for _, o := range opts {
 		o.apply(&p.opts)
 	}
@@ -259,6 +257,9 @@ func (p *parser) get(key string) (string, bool) {
 
 //decode string to go structure
 func (p *parser) Unmarshal(data []byte, v interface{}) (err error) {
+	//for duplicate use
+	p.container = map[string]string{}
+
 	rv := reflect.ValueOf(v)
 	reflect.TypeOf(v)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
@@ -271,6 +272,9 @@ func (p *parser) Unmarshal(data []byte, v interface{}) (err error) {
 	}
 
 	p.parse(rv, "")
+
+	//release resource
+	p.container = nil
 	return p.err
 }
 

@@ -19,15 +19,7 @@ func NewEncoder(opts ...Option) *encoder {
 	for _, o := range opts {
 		o.apply(&b.opts)
 	}
-	b.buffer = new(bytes.Buffer)
 	return b
-}
-
-//when finish, get the result []byte
-//do not forget to remove the last & character
-func (b *encoder) GetBytes() []byte {
-	bs := b.buffer.Bytes()
-	return bs[:len(bs)-1]
 }
 
 //get UrlEncoder
@@ -150,12 +142,20 @@ func (b *encoder) encode(rv reflect.Value) (s string, err error) {
 
 //encode go structure to string
 func (b *encoder) Marshal(data interface{}) ([]byte, error) {
+	//for duplicate call
+	b.buffer = new(bytes.Buffer)
+
 	rv := reflect.ValueOf(data)
 	b.buildQuery(rv, "", reflect.Interface)
 	if b.err != nil {
 		return nil, b.err
 	}
-	return b.GetBytes(), nil
+
+	bs := b.buffer.Bytes()
+	//release resource
+	b.buffer = nil
+	//do not forget to remove the last & character
+	return bs[:len(bs)-1], nil
 }
 
 //encode go structure to string
