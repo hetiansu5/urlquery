@@ -29,26 +29,40 @@ import (
 	"fmt"
 )
 
+type SimpleChild struct {
+	Status bool `query:"status"`
+	Name   string
+}
+
 type SimpleData struct {
-	Id     int
-	Name   string          `query:"name"`
+	Id         int
+	Name       string          `query:"name"`
+	Child      SimpleChild
+	Params     map[string]int8 `query:"p"`
+	Array      [3]uint16
 }
 
 func main() {
 	data := SimpleData{
 		Id:   2,
-		Name: "test",
+		Name: "http://localhost/test.php?id=2",
+		Child: SimpleChild{
+			Status: true,
+		},
+		Params: map[string]int8{
+			"one": 1,
+		},
+		Array: [3]uint16{2, 3, 300},
 	}
 
-	//Marshal: from go structure to http-query string
-	bytes, err := urlquery.Marshal(data)
-	fmt.Println(string(bytes), err)
+	//Marshal: from go structure to url query string
+	bytes, _ := urlquery.Marshal(data)
+	fmt.Println(string(bytes))
 
-	//Unmarshal: from http-query  string to go structure
+	//Unmarshal: from url query  string to go structure
 	v := &SimpleData{}
-	err = urlquery.Unmarshal(bytes, v)
-	fmt.Println(*v, err)
-}
+	urlquery.Unmarshal(bytes, v)
+	fmt.Println(*v)
 ```
 
 ### 注意事项

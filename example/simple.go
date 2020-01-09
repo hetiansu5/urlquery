@@ -41,7 +41,7 @@ func main() {
 
 	fmt.Println(data)
 
-	//Marshal: from go structure to http-query string
+	//Marshal: from go structure to url query string
 	bytes, err := urlquery.Marshal(data)
 	if err != nil {
 		fmt.Println(err)
@@ -49,7 +49,7 @@ func main() {
 	}
 	fmt.Println(string(bytes))
 
-	//Unmarshal: from http-query  string to go structure
+	//Unmarshal: from url query string to go structure
 	v := &SimpleData{}
 	err = urlquery.Unmarshal(bytes, v)
 	if err != nil {
