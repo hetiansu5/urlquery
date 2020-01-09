@@ -259,6 +259,7 @@ func (p *parser) get(key string) (string, bool) {
 func (p *parser) Unmarshal(data []byte, v interface{}) (err error) {
 	//for duplicate use
 	p.container = map[string]string{}
+	p.err = nil
 
 	rv := reflect.ValueOf(v)
 	reflect.TypeOf(v)

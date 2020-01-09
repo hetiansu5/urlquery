@@ -144,6 +144,7 @@ func (b *encoder) encode(rv reflect.Value) (s string, err error) {
 func (b *encoder) Marshal(data interface{}) ([]byte, error) {
 	//for duplicate call
 	b.buffer = new(bytes.Buffer)
+	b.err = nil
 
 	rv := reflect.ValueOf(data)
 	b.buildQuery(rv, "", reflect.Interface)

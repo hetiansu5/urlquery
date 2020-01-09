@@ -35,6 +35,6 @@ func main() {
 	}
 
 	//remember: just id and name can be parsed
-	//arr[0] is not match map[string][string]
+	//arr[0] is not match map[string]string
 	fmt.Println(m)
 }
