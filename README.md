@@ -1,5 +1,5 @@
 ### Introduce
-an application/x-www-form-urlencoded agreement data translator by go.
+An application/x-www-form-urlencoded query translator by go.
 
 - Translate from a x-www-form-urlencoded query string to go structure
 - Translate from go structure to a x-www-form-urlencoded query string
