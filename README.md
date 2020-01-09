@@ -81,9 +81,9 @@ func main() {
 
 
 ### Attention
-- For Map structure, Marshal support map[Basic]Basic|Complex, but Unmarshal just support map[Basic]Basic
-- default: disable ignoring encoding Zero-value from struct. When it is enabled, consistency problem should be evaluated in your project
-- Remember it: Byte is actually uint8, Rune is actually int32
+- For Map structure, Marshal supports map[Basic]Basic|Complex, but Unmarshal just supports map[Basic]Basic
+- Default: disable ignoring encoding Zero-value of struct. When it is enabled, consistency should be evaluated in your project
+- Remember that: Byte is actually uint8, Rune is actually int32
 
 
 ### License
