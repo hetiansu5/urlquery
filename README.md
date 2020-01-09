@@ -54,7 +54,7 @@ func main() {
 
 ### Attention
 - For Map structure, Marshal supports map[Basic]Basic|Complex, but Unmarshal just supports map[Basic]Basic
-- Default: ignoring Zero-value of struct member. If you have consistency problem, you can enable it
+- Default: ignoring Zero-value of struct member. You can enable it with `Option`
 - Remember that: Byte is actually uint8, Rune is actually int32
 
 

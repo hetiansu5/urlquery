@@ -7,7 +7,7 @@ import (
 	"bytes"
 )
 
-//translator from a x-www-form-urlencoded form string to go structure
+//parser from URL Query string to go structure
 
 type parser struct {
 	container map[string]string

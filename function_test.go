@@ -27,3 +27,27 @@ func Test_unpackQueryKey_LeftSquareBracketEnd(t *testing.T) {
 		t.Error("unpack error")
 	}
 }
+
+func Test_repackArrayQueryKey(t *testing.T) {
+	key := "[hts][0]"
+	target := repackArrayQueryKey(key)
+	if target != "[hts][]" {
+		t.Error("failed to execute repackArrayQueryKey funtion")
+	}
+}
+
+func Test_repackArrayQueryKey1(t *testing.T) {
+	key := "hts]"
+	target := repackArrayQueryKey(key)
+	if target != "hts]" {
+		t.Error("failed to execute repackArrayQueryKey funtion")
+	}
+}
+
+func Test_repackArrayQueryKey2(t *testing.T) {
+	key := "[hts"
+	target := repackArrayQueryKey(key)
+	if target != "[hts" {
+		t.Error("failed to execute repackArrayQueryKey funtion")
+	}
+}

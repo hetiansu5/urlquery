@@ -6,7 +6,7 @@ import (
 	"bytes"
 )
 
-//Translate from go structure data to a x-www-form-urlencoded form string
+//encoder from go structure data to URL Query string
 
 type builder struct {
 	buffer *bytes.Buffer
