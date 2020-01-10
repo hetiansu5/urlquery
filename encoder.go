@@ -140,7 +140,11 @@ func (b *encoder) encode(rv reflect.Value) (s string, err error) {
 	return
 }
 
-//encode go structure to string
+/**
+ * encode go structure to string
+ *
+ * @important in a same instance, multiple threads call is unsafe
+ */
 func (b *encoder) Marshal(data interface{}) ([]byte, error) {
 	//for duplicate call
 	b.buffer = new(bytes.Buffer)
@@ -160,6 +164,7 @@ func (b *encoder) Marshal(data interface{}) ([]byte, error) {
 }
 
 //encode go structure to string
+//Thread safety
 func Marshal(data interface{}) ([]byte, error) {
 	b := NewEncoder()
 	return b.Marshal(data)

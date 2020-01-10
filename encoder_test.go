@@ -102,6 +102,29 @@ func TestMarshal_AnonymousFields(t *testing.T) {
 	}
 }
 
+func TestMarshal_DuplicateCall(t *testing.T) {
+	d1 := BuilderChild{
+		Description: "a",
+		Long:        10,
+	}
+
+	encoder := NewEncoder()
+	encoder.Marshal(d1)
+
+	d2 := BuilderChild{
+		Description: "bb",
+		Long:        200,
+	}
+	bytes2, err := encoder.Marshal(d2)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if string(bytes2) != "desc=bb&Long=200" {
+		t.Error("failed to Marshal duplicate call")
+	}
+}
+
 //BenchmarkMarshal-4     	  295726	     11902 ns/op
 func BenchmarkMarshal(b *testing.B) {
 	data := getMockData2()

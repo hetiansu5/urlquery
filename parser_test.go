@@ -22,6 +22,24 @@ type TestParseInfo struct {
 	UintPtr  uintptr
 }
 
+func TestUnmarshal_DuplicateCall(t *testing.T) {
+	parser := NewParser()
+
+	d1 := "desc=bb&Long=200"
+	v1 := &TestParseChild{}
+	parser.Unmarshal([]byte(d1), v1)
+
+	d2 := "desc=a&Long=100"
+	v2 := &TestParseChild{}
+	err := parser.Unmarshal([]byte(d2), v2)
+	if err != nil {
+		t.Error(err)
+	}
+	if v2.Description != "a" || v2.Long != 100 {
+		t.Error("failed to Unmarshal duplicate call")
+	}
+}
+
 func TestUnmarshal_NestedStructure(t *testing.T) {
 	var data = "Id=1&name=test&child[desc]=c1&child[Long]=10&childPtr[Long]=2&childPtr[Description]=b" +
 		"&children[0][desc]=d1&children[1][Long]=12&children[5][desc]=d5&children[5][Long]=50&desc=rtt" +

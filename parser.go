@@ -255,7 +255,11 @@ func (p *parser) get(key string) (string, bool) {
 	return v, ok
 }
 
-//decode string to go structure
+/**
+ * decode string to go structure
+ *
+ * @important in a same instance, multiple threads call is unsafe
+ */
 func (p *parser) Unmarshal(data []byte, v interface{}) (err error) {
 	//for duplicate use
 	p.container = map[string]string{}
