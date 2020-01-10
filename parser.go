@@ -24,9 +24,9 @@ func NewParser(opts ...Option) *parser {
 }
 
 func (p *parser) init(data []byte) (err error) {
-	arr := bytes.Split(data, []byte("&"))
+	arr := bytes.Split(data, []byte(SymbolAnd))
 	for _, value := range arr {
-		ns := strings.SplitN(string(value), "=", 2)
+		ns := strings.SplitN(string(value), SymbolEqual, 2)
 		if len(ns) > 1 {
 			ns[0], err = getUrlEncoder().UnEscape(ns[0])
 			if err != nil {

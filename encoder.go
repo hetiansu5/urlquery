@@ -6,6 +6,11 @@ import (
 	"bytes"
 )
 
+const (
+	SymbolEqual = "="
+	SymbolAnd   = "&"
+)
+
 //encoder from go structure data to URL Query string
 
 type encoder struct {
@@ -126,7 +131,7 @@ func (b *encoder) appendKeyValue(key string, rv reflect.Value, parentKind reflec
 		return
 	}
 
-	b.buffer.WriteString(b.getUrlEncoder().Escape(key) + "=" + b.getUrlEncoder().Escape(s) + "&")
+	b.buffer.WriteString(b.getUrlEncoder().Escape(key) + SymbolEqual + b.getUrlEncoder().Escape(s) + SymbolAnd)
 }
 
 func (b *encoder) encode(rv reflect.Value) (s string, err error) {

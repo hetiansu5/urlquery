@@ -6,7 +6,7 @@ import "net/url"
 
 var (
 	gUrlEncoder UrlEncoder
-	cUrlEncoder commonUrlEncoder
+	cUrlEncoder DefaultUrlEncoder
 )
 
 func SetGlobalUrlEncoder(u UrlEncoder) {
@@ -25,12 +25,13 @@ type UrlEncoder interface {
 	UnEscape(s string) (string, error)
 }
 
-type commonUrlEncoder struct{}
+//default url encoder
+type DefaultUrlEncoder struct{}
 
-func (u commonUrlEncoder) Escape(s string) string {
+func (u DefaultUrlEncoder) Escape(s string) string {
 	return url.QueryEscape(s)
 }
 
-func (u commonUrlEncoder) UnEscape(s string) (string, error) {
+func (u DefaultUrlEncoder) UnEscape(s string) (string, error) {
 	return url.QueryUnescape(s)
 }
