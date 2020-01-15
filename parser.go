@@ -11,10 +11,11 @@ import (
 //parser from URL Query string to go structure
 
 type parser struct {
-	container map[string]string
-	err       error
-	opts      options
-	mutex  sync.Mutex
+	container  map[string]string
+	err        error
+	opts       options
+	mutex      sync.Mutex
+	urlEncoder UrlEncoder
 }
 
 func NewParser(opts ...Option) *parser {
@@ -30,12 +31,12 @@ func (p *parser) init(data []byte) (err error) {
 	for _, value := range arr {
 		ns := strings.SplitN(string(value), SymbolEqual, 2)
 		if len(ns) > 1 {
-			ns[0], err = getUrlEncoder().UnEscape(ns[0])
+			ns[0], err = p.urlEncoder.UnEscape(ns[0])
 			if err != nil {
 				return
 			}
 
-			ns[1], err = getUrlEncoder().UnEscape(ns[1])
+			ns[1], err = p.urlEncoder.UnEscape(ns[1])
 			if err != nil {
 				return
 			}
@@ -59,12 +60,13 @@ func (p *parser) init(data []byte) (err error) {
 	return
 }
 
-//get urlEncoder
-func (p *parser) getUrlEncoder() UrlEncoder {
+//reset UrlEncoder
+func (p *parser) resetUrlEncoder() {
 	if p.opts.urlEncoder != nil {
-		return p.opts.urlEncoder
+		p.urlEncoder = p.opts.urlEncoder
+	} else {
+		p.urlEncoder = getUrlEncoder()
 	}
-	return getUrlEncoder()
 }
 
 //generate next parent node key
@@ -268,6 +270,7 @@ func (p *parser) Unmarshal(data []byte, v interface{}) (err error) {
 	//for duplicate use
 	p.container = map[string]string{}
 	p.err = nil
+	p.resetUrlEncoder()
 
 	rv := reflect.ValueOf(v)
 	reflect.TypeOf(v)

@@ -15,10 +15,11 @@ const (
 //encoder from go structure data to URL Query string
 
 type encoder struct {
-	buffer *bytes.Buffer
-	err    error
-	opts   options
-	mutex  sync.Mutex
+	buffer     *bytes.Buffer
+	err        error
+	opts       options
+	mutex      sync.Mutex
+	urlEncoder UrlEncoder
 }
 
 func NewEncoder(opts ...Option) *encoder {
@@ -29,12 +30,13 @@ func NewEncoder(opts ...Option) *encoder {
 	return b
 }
 
-//get UrlEncoder
-func (b *encoder) getUrlEncoder() UrlEncoder {
+//reset UrlEncoder
+func (b *encoder) resetUrlEncoder() {
 	if b.opts.urlEncoder != nil {
-		return b.opts.urlEncoder
+		b.urlEncoder = b.opts.urlEncoder
+	} else {
+		b.urlEncoder = getUrlEncoder()
 	}
-	return getUrlEncoder()
 }
 
 //generate next parent node key
@@ -133,7 +135,7 @@ func (b *encoder) appendKeyValue(key string, rv reflect.Value, parentKind reflec
 		return
 	}
 
-	b.buffer.WriteString(b.getUrlEncoder().Escape(key) + SymbolEqual + b.getUrlEncoder().Escape(s) + SymbolAnd)
+	b.buffer.WriteString(b.urlEncoder.Escape(key) + SymbolEqual + b.urlEncoder.Escape(s) + SymbolAnd)
 }
 
 func (b *encoder) encode(rv reflect.Value) (s string, err error) {
@@ -158,6 +160,7 @@ func (b *encoder) Marshal(data interface{}) ([]byte, error) {
 	//for duplicate call
 	b.buffer = new(bytes.Buffer)
 	b.err = nil
+	b.resetUrlEncoder()
 
 	rv := reflect.ValueOf(data)
 	b.buildQuery(rv, "", reflect.Interface)
