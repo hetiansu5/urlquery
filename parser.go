@@ -5,6 +5,7 @@ import (
 	"strings"
 	"strconv"
 	"bytes"
+	"sync"
 )
 
 //parser from URL Query string to go structure
@@ -13,6 +14,7 @@ type parser struct {
 	container map[string]string
 	err       error
 	opts      options
+	mutex  sync.Mutex
 }
 
 func NewParser(opts ...Option) *parser {
@@ -257,10 +259,12 @@ func (p *parser) get(key string) (string, bool) {
 
 /**
  * decode string to go structure
- *
- * @important in a same instance, multiple threads call is unsafe
+ * Thread safety
  */
 func (p *parser) Unmarshal(data []byte, v interface{}) (err error) {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+
 	//for duplicate use
 	p.container = map[string]string{}
 	p.err = nil
@@ -283,7 +287,10 @@ func (p *parser) Unmarshal(data []byte, v interface{}) (err error) {
 	return p.err
 }
 
-//decode string to go structure
+/**
+ * decode string to go structure
+ * Thread safety
+ */
 func Unmarshal(data []byte, v interface{}) error {
 	p := NewParser()
 	return p.Unmarshal(data, v)

@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"strconv"
 	"bytes"
+	"sync"
 )
 
 const (
@@ -17,6 +18,7 @@ type encoder struct {
 	buffer *bytes.Buffer
 	err    error
 	opts   options
+	mutex  sync.Mutex
 }
 
 func NewEncoder(opts ...Option) *encoder {
@@ -147,10 +149,12 @@ func (b *encoder) encode(rv reflect.Value) (s string, err error) {
 
 /**
  * encode go structure to string
- *
- * @important in a same instance, multiple threads call is unsafe
+ * Thread safety
  */
 func (b *encoder) Marshal(data interface{}) ([]byte, error) {
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
+
 	//for duplicate call
 	b.buffer = new(bytes.Buffer)
 	b.err = nil
@@ -168,8 +172,10 @@ func (b *encoder) Marshal(data interface{}) ([]byte, error) {
 	return bs[:len(bs)-1], nil
 }
 
-//encode go structure to string
-//Thread safety
+/**
+ * encode go structure to string
+ * Thread safety
+ */
 func Marshal(data interface{}) ([]byte, error) {
 	b := NewEncoder()
 	return b.Marshal(data)
