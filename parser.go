@@ -1,10 +1,10 @@
 package urlquery
 
 import (
-	"reflect"
-	"strings"
-	"strconv"
 	"bytes"
+	"reflect"
+	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -84,6 +84,14 @@ func (p *parser) parse(rv reflect.Value, parentNode string) {
 		//If Ptr is nil and can be set, Ptr should be initialized
 		if rv.IsNil() {
 			if rv.CanSet() {
+
+				//lookup matched map data with prefix key
+				matches := p.lookup(parentNode)
+				// If none match keep nil
+				if len(matches) == 0 {
+					break
+				}
+
 				rv.Set(reflect.New(rv.Type().Elem()))
 				p.parse(rv.Elem(), parentNode)
 			}

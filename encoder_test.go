@@ -1,8 +1,8 @@
 package urlquery
 
 import (
-	"testing"
 	"fmt"
+	"testing"
 )
 
 type BuilderChild struct {
@@ -39,14 +39,53 @@ func TestMarshal_Struct(t *testing.T) {
 
 	if err != nil {
 		t.Error(err)
+		return
 	}
 
 	v := BuilderInfo{}
-	Unmarshal(bytes, &v)
+	err = Unmarshal(bytes, &v)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 
 	if v.Name != "child" || v.status != false || v.Child.Height != 0 || len(v.Children) != 5 {
 		fmt.Println(v.Name, v.status, v.Child.Height, v.Children)
 		t.Error("Marshal Unmarshal is not equal")
+		return
+	}
+}
+
+func TestMarshal_NilPtr_Struct(t *testing.T) {
+	data := getMockData3()
+
+	bytes, err := Marshal(data)
+
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	v := BuilderInfo{}
+	err = Unmarshal(bytes, &v)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if v.Name != "child3" || v.status != false || v.Child.Height != 0 || len(v.Children) != 5 {
+		fmt.Println(v.Name, v.status, v.Child.Height, v.Children)
+		t.Error("Marshal Unmarshal is not equal")
+		return
+	}
+
+	if v.ChildPtr != nil {
+		t.Error("The child pointer should be nil not ", v.ChildPtr)
+		return
+	}
+	if v.Params != nil {
+		t.Error("The params map should be nil")
+		return
 	}
 }
 
@@ -186,5 +225,23 @@ func getMockData2() BuilderInfo {
 		},
 		status:  true,
 		UintPtr: uintptr(222),
+	}
+}
+
+func getMockData3() BuilderInfo {
+	return BuilderInfo{
+		Name: "child3",
+		Children: []BuilderChild{
+			{Description: "d31", Height: 180},
+			{Description: "d32", Long: 140},
+			{Description: "d34"},
+			{Description: "d35", Long: 1, Height: 20},
+			{Description: "d36"},
+		},
+		Child:    BuilderChild{},
+		ChildPtr: nil,
+		Params:   nil,
+		status:   true,
+		UintPtr:  uintptr(2222),
 	}
 }
