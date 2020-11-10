@@ -224,7 +224,7 @@ func TestUnmarshal_UnhandledType2(t *testing.T) {
 	if err == nil {
 		t.Error("error should not be ignored")
 	}
-	if _, ok := err.(ErrInvalidMapValueType); !ok {
+	if _, ok := err.(ErrInvalidMapKeyType); !ok {
 		t.Errorf("error type is unexpected. %v", err)
 	}
 }

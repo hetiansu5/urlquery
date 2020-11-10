@@ -107,11 +107,8 @@ func (p *parser) parse(rv reflect.Value, parentNode string) {
 
 		//limited condition of map key and value type
 		//If not meet the condition, will return error
-		if !isAccessMapKeyType(rv.Type().Key().Kind()) {
-			p.err = ErrInvalidMapKeyType{typ: rv.Type().Key()}
-			return
-		} else if !isAccessMapValueType(rv.Type().Elem().Kind()) {
-			p.err = ErrInvalidMapValueType{typ: rv.Type().Elem()}
+		if !isAccessMapKeyType(rv.Type().Key().Kind()) || !isAccessMapValueType(rv.Type().Elem().Kind()) {
+			p.err = ErrInvalidMapKeyType{typ: rv.Type()}
 			return
 		}
 
