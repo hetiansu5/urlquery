@@ -57,11 +57,13 @@ func main() {
 
 	//Marshal: from go structure to url query string
 	bytes, _ := urlquery.Marshal(data)
+	//output Id=2&name=http%3A%2F%2Flocalhost%2Ftest.php%3Fid%3D2&Child%5Bstatus%5D=1&p%5Bone%5D=1&Array%5B%5D=2&Array%5B%5D=3&Array%5B%5D=300
 	fmt.Println(string(bytes))
 
 	//Unmarshal: from url query  string to go structure
 	v := &SimpleData{}
 	urlquery.Unmarshal(bytes, v)
+	//output {Id:2, Name:"http://localhost/test.php?id=2", Child: SimpleChild{Status:true}, Params:map[one:1], Array:[2, 3, 300]}
 	fmt.Println(*v)
 ```
 

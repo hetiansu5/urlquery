@@ -16,7 +16,7 @@ type SimpleData struct {
 	Child      SimpleChild
 	Params     map[string]int8 `query:"p"`
 	SliceChild []SimpleChild   `query:"s"`
-	Password   string          `query:"-"`
+	Password   string          `query:"-"` //- means ignoring password
 	Array      [3]uint16
 }
 

@@ -6,6 +6,8 @@ import (
 	"net/url"
 )
 
+//support self-defined options:  self-defined UrlEncoder, not ignoring zero-value,
+
 type OptionChild struct {
 	Status bool `query:"status"`
 	Name   string
