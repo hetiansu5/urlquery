@@ -1,5 +1,5 @@
-### Introduce
-A URL Query string Encoder and Parser by go.
+### Introduction
+A URL Query string Encoder and Parser with go.
 
 - Parse from URL Query string to go structure
 - Encode from go structure to URL Query string
