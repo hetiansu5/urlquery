@@ -245,3 +245,15 @@ func getMockData3() BuilderInfo {
 		UintPtr:  uintptr(2222),
 	}
 }
+
+func TestEmptyStruct(t *testing.T) {
+	data := &TestCircle{}
+	bytes, err := Marshal(data)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if string(bytes) != "" {
+		t.Error("failed to Marshal anonymous fields")
+	}
+}
