@@ -13,9 +13,10 @@ x-www-form-urlencoded HTTP-Query URLEncode URL-Query go
     - 复合数据类型: 数组 切片 哈希 结构体
     - 嵌套结构体
 - 支持顶层的数据结构为数组 切片 哈希，不仅仅是结构体
-- 支持自定义的URL-Encode编码规则，支持全局、局部设置方式，支持默认规则
-- 支持自定义的键名映射规则（结构体Tag示例：`query:"name"`）
-- 支持开启或者关闭忽略结构体零值编码（默认开启）
+- 支持自定义的URL-Encode编码规则，支持全局、局部设置方式，支持默认规则 [example](example/withoption.go)
+- 支持自定义的键名映射规则（结构体Tag示例：`query:"name"`）[example](example/simple.go)
+- 支持自定义的值转换函数 [example](example/converter.go)
+- 支持开启或者关闭忽略结构体零值编码（默认开启） [example](example/withoption.go)
 
 
 ### 快速入门

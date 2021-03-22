@@ -7,53 +7,24 @@ import (
 
 //translator from string to go basic structure
 
-var (
-	decoderMap = map[reflect.Kind]valueDecoder{
-		reflect.Bool:    boolDecoder{},
-		reflect.Int:     intDecoder{},
-		reflect.Int8:    intDecoder{8},
-		reflect.Int16:   intDecoder{16},
-		reflect.Int32:   intDecoder{32},
-		reflect.Int64:   intDecoder{64},
-		reflect.Uint:    uintDecoder{},
-		reflect.Uint8:   uintDecoder{8},
-		reflect.Uint16:  uintDecoder{16},
-		reflect.Uint32:  uintDecoder{32},
-		reflect.Uint64:  uintDecoder{64},
-		reflect.Uintptr: uintptrDecoder{},
-		reflect.Float32: floatDecoder{32},
-		reflect.Float64: floatDecoder{64},
-		reflect.String:  stringDecoder{},
-	}
-)
+type valueDecode func(string) (reflect.Value, error)
 
-type valueDecoder interface {
-	Decode(value string) (reflect.Value, error)
-}
-
-type boolDecoder struct{}
-
-func (e boolDecoder) Decode(value string) (rv reflect.Value, err error) {
+func boolDecode(value string) (reflect.Value, error) {
 	b, err := strconv.ParseBool(value)
 	if err != nil {
 		err = ErrTranslated{err: err}
-		return
+		return reflect.Value{}, err
 	}
-	rv = reflect.ValueOf(b)
-	return
+	return reflect.ValueOf(b), nil
 }
 
-type intDecoder struct {
-	bitSize int
-}
-
-func (e intDecoder) Decode(value string) (rv reflect.Value, err error) {
-	v, err := strconv.ParseInt(value, 10, e.bitSize)
+func baseIntDecode(value string, bitSize int) (rv reflect.Value, err error) {
+	v, err := strconv.ParseInt(value, 10, bitSize)
 	if err != nil {
 		err = ErrTranslated{err: err}
 		return
 	}
-	switch e.bitSize {
+	switch bitSize {
 	case 64:
 		rv = reflect.ValueOf(v)
 	case 32:
@@ -65,22 +36,24 @@ func (e intDecoder) Decode(value string) (rv reflect.Value, err error) {
 	case 0:
 		rv = reflect.ValueOf(int(v))
 	default:
-		err = ErrUnsupportedBitSize{bitSize: e.bitSize}
+		err = ErrUnsupportedBitSize{bitSize: bitSize}
 	}
 	return
 }
 
-type uintDecoder struct {
-	bitSize int
+func intDecode(bitSize int) valueDecode {
+	return func(value string) (reflect.Value, error) {
+		return baseIntDecode(value, bitSize)
+	}
 }
 
-func (e uintDecoder) Decode(value string) (rv reflect.Value, err error) {
-	v, err := strconv.ParseUint(value, 10, e.bitSize)
+func baseUintDecode(value string, bitSize int) (rv reflect.Value, err error) {
+	v, err := strconv.ParseUint(value, 10, bitSize)
 	if err != nil {
 		err = ErrTranslated{err: err}
 		return
 	}
-	switch e.bitSize {
+	switch bitSize {
 	case 64:
 		rv = reflect.ValueOf(v)
 	case 32:
@@ -92,56 +65,86 @@ func (e uintDecoder) Decode(value string) (rv reflect.Value, err error) {
 	case 0:
 		rv = reflect.ValueOf(uint(v))
 	default:
-		err = ErrUnsupportedBitSize{bitSize: e.bitSize}
+		err = ErrUnsupportedBitSize{bitSize: bitSize}
 	}
 	return
 }
 
-type uintptrDecoder struct {
-	bitSize int
+func uintDecode(bitSize int) valueDecode {
+	return func(value string) (reflect.Value, error) {
+		return baseUintDecode(value, bitSize)
+	}
 }
 
-func (e uintptrDecoder) Decode(value string) (rv reflect.Value, err error) {
+func uintPrtDecode(value string) (rv reflect.Value, err error) {
 	v, err := strconv.ParseUint(value, 10, 0)
 	if err != nil {
 		err = ErrTranslated{err: err}
 		return
 	}
-
 	return reflect.ValueOf(uintptr(v)), nil
 }
 
-type floatDecoder struct {
-	bitSize int
-}
-
-func (e floatDecoder) Decode(value string) (rv reflect.Value, err error) {
-	v, err := strconv.ParseFloat(value, e.bitSize)
+func baseFloatDecode(value string, bitSize int) (rv reflect.Value, err error) {
+	v, err := strconv.ParseFloat(value, bitSize)
 	if err != nil {
 		err = ErrTranslated{err: err}
 		return
 	}
-	switch e.bitSize {
+	switch bitSize {
 	case 64:
 		rv = reflect.ValueOf(v)
 	case 32:
 		rv = reflect.ValueOf(float32(v))
 	default:
-		err = ErrUnsupportedBitSize{bitSize: e.bitSize}
+		err = ErrUnsupportedBitSize{bitSize: bitSize}
 	}
 	return
 }
 
-type stringDecoder struct{}
+func floatDecode(bitSize int) valueDecode {
+	return func(value string) (reflect.Value, error) {
+		return baseFloatDecode(value, bitSize)
+	}
+}
 
-func (e stringDecoder) Decode(value string) (rv reflect.Value, err error) {
+func stringDecode(value string) (reflect.Value, error) {
 	return reflect.ValueOf(value), nil
 }
 
-func getDecoder(kind reflect.Kind) valueDecoder {
-	if decoder, ok := decoderMap[kind]; ok {
-		return decoder
-	} else {
+func getDecodeFunc(kind reflect.Kind) valueDecode {
+	switch kind {
+	case reflect.Bool:
+		return boolDecode
+	case reflect.Int:
+		return intDecode(0)
+	case reflect.Int8:
+		return intDecode(8)
+	case reflect.Int16:
+		return intDecode(16)
+	case reflect.Int32:
+		return intDecode(32)
+	case reflect.Int64:
+		return intDecode(64)
+	case reflect.Uint:
+		return uintDecode(0)
+	case reflect.Uint8:
+		return uintDecode(8)
+	case reflect.Uint16:
+		return uintDecode(16)
+	case reflect.Uint32:
+		return uintDecode(32)
+	case reflect.Uint64:
+		return uintDecode(64)
+	case reflect.Uintptr:
+		return uintPrtDecode
+	case reflect.Float32:
+		return floatDecode(32)
+	case reflect.Float64:
+		return floatDecode(64)
+	case reflect.String:
+		return stringDecode
+	default:
 		return nil
 	}
 }

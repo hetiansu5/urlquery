@@ -15,11 +15,12 @@ const (
 //encoder from go structure data to URL Query string
 
 type encoder struct {
-	buffer     *bytes.Buffer
-	err        error
-	opts       options
-	mutex      sync.Mutex
-	urlEncoder UrlEncoder
+	buffer        *bytes.Buffer
+	err           error
+	opts          options
+	mutex         sync.Mutex
+	urlEncoder    UrlEncoder
+	encodeFuncMap map[reflect.Kind]valueEncode
 }
 
 func NewEncoder(opts ...Option) *encoder {
@@ -27,6 +28,7 @@ func NewEncoder(opts ...Option) *encoder {
 	for _, o := range opts {
 		o.apply(&b.opts)
 	}
+	b.encodeFuncMap = make(map[reflect.Kind]valueEncode)
 	return b
 }
 
@@ -120,7 +122,7 @@ func (b *encoder) buildQuery(rv reflect.Value, parentNode string, parentKind ref
 //basic structure can be translated directly
 func (b *encoder) appendKeyValue(key string, rv reflect.Value, parentKind reflect.Kind) {
 	//If parent type is struct and empty value will be ignored by default. unless needEmptyValue is true.
-	if parentKind == reflect.Struct && !b.opts.needEmptyValue && isEmptyValue(rv) {
+	if parentKind == reflect.Struct && !b.opts.needEmptyValue && isZeroValue(rv) {
 		return
 	}
 
@@ -139,14 +141,24 @@ func (b *encoder) appendKeyValue(key string, rv reflect.Value, parentKind reflec
 }
 
 func (b *encoder) encode(rv reflect.Value) (s string, err error) {
-	encoder := getEncoder(rv.Kind())
-	if encoder == nil {
+	encodeFunc := b.getEncodeFunc(rv.Kind())
+	if encodeFunc == nil {
 		err = ErrUnhandledType{typ: rv.Type()}
 		return
 	}
-
-	s = encoder.Encode(rv)
+	s = encodeFunc(rv)
 	return
+}
+
+func (b *encoder) getEncodeFunc(kind reflect.Kind) valueEncode {
+	if encodeFunc, ok := b.encodeFuncMap[kind]; ok {
+		return encodeFunc
+	}
+	return getEncodeFunc(kind)
+}
+
+func (b *encoder) RegisterEncodeFunc(kind reflect.Kind, encode valueEncode) {
+	b.encodeFuncMap[kind] = encode
 }
 
 /**

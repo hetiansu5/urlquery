@@ -11,11 +11,12 @@ import (
 //parser from URL Query string to go structure
 
 type parser struct {
-	container  map[string]string
-	err        error
-	opts       options
-	mutex      sync.Mutex
-	urlEncoder UrlEncoder
+	container     map[string]string
+	err           error
+	opts          options
+	mutex         sync.Mutex
+	urlEncoder    UrlEncoder
+	decodeFuncMap map[reflect.Kind]valueDecode
 }
 
 func NewParser(opts ...Option) *parser {
@@ -23,6 +24,7 @@ func NewParser(opts ...Option) *parser {
 	for _, o := range opts {
 		o.apply(&p.opts)
 	}
+	p.decodeFuncMap = make(map[reflect.Kind]valueDecode)
 	return p
 }
 
@@ -221,14 +223,19 @@ func (p *parser) parseValue(parentNode string, rv reflect.Value) {
 }
 
 func (p *parser) decode(typ reflect.Type, value string) (v reflect.Value, err error) {
-	decoder := getDecoder(typ.Kind())
-	if decoder == nil {
+	decodeFunc := p.getDecodeFunc(typ.Kind())
+	if decodeFunc == nil {
 		err = ErrUnhandledType{typ: typ}
 		return
 	}
+	return decodeFunc(value)
+}
 
-	v, err = decoder.Decode(value)
-	return
+func (p *parser) getDecodeFunc(kind reflect.Kind) valueDecode {
+	if decodeFunc, ok := p.decodeFuncMap[kind]; ok {
+		return decodeFunc
+	}
+	return getDecodeFunc(kind)
 }
 
 //lookup by prefix match from container variable
@@ -258,10 +265,15 @@ func (p *parser) lookupForSlice(prefix string) map[int]bool {
 	return data
 }
 
-//get value by key from container variable of map struct
+//get value by key from container variable which is map struct
 func (p *parser) get(key string) (string, bool) {
 	v, ok := p.container[key]
 	return v, ok
+}
+
+// self-defined valueDecode function
+func (p *parser) RegisterDecodeFunc(kind reflect.Kind, decode valueDecode) {
+	p.decodeFuncMap[kind] = decode
 }
 
 /**
