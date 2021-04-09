@@ -8,11 +8,13 @@ import (
 )
 
 const (
+	// Symbol character = of querystring
 	SymbolEqual = "="
-	SymbolAnd   = "&"
+	// Symbol character & of querystring
+	SymbolAnd = "&"
 )
 
-// encoder from go structure data to URL Query string
+// A encoder from go structure data to URL Query string
 type encoder struct {
 	buffer        *bytes.Buffer
 	err           error
@@ -47,7 +49,7 @@ func (b *encoder) genNextParentNode(parentNode, key string) string {
 	return genNextParentNode(parentNode, key)
 }
 
-// unknown structure need to be detected and handled correctly
+// detect type of value via reflect, handle correctly
 func (b *encoder) buildQuery(rv reflect.Value, parentNode string, parentKind reflect.Kind) {
 	if b.err != nil {
 		return
@@ -55,68 +57,78 @@ func (b *encoder) buildQuery(rv reflect.Value, parentNode string, parentKind ref
 
 	switch rv.Kind() {
 	case reflect.Map:
-		for _, key := range rv.MapKeys() {
-			//If type of key is interface or ptr, check the real element of key
-			checkKey := key
-			if key.Kind() == reflect.Interface || key.Kind() == reflect.Ptr {
-				checkKey = checkKey.Elem()
-			}
-
-			//limited condition of map key type
-			if !isAccessMapKeyType(checkKey.Kind()) {
-				b.err = ErrInvalidMapKeyType{typ: checkKey.Type()}
-				return
-			}
-
-			//encode key structure to string
-			keyStr, err := b.encode(checkKey)
-			if err != nil {
-				b.err = err
-				return
-			}
-
-			b.buildQuery(rv.MapIndex(key), b.genNextParentNode(parentNode, keyStr), rv.Kind())
-		}
+		b.buildQueryForMap(rv, parentNode)
 	case reflect.Slice, reflect.Array:
 		for i := 0; i < rv.Len(); i++ {
 			b.buildQuery(rv.Index(i), b.genNextParentNode(parentNode, strconv.Itoa(i)), rv.Kind())
 		}
 	case reflect.Struct:
-		rt := rv.Type()
-		for i := 0; i < rt.NumField(); i++ {
-			ft := rt.Field(i)
-			//unexported
-			if ft.PkgPath != "" && !ft.Anonymous {
-				continue
-			}
-
-			//specially handle anonymous fields
-			if ft.Anonymous && rv.Field(i).Kind() == reflect.Struct {
-				b.buildQuery(rv.Field(i), parentNode, rv.Kind())
-				continue
-			}
-
-			tag := ft.Tag.Get("query")
-			//all ignore
-			if tag == "-" {
-				continue
-			}
-
-			t := newTag(tag)
-			//get the related name
-			name := t.getName()
-			if name == "" {
-				name = ft.Name
-			}
-
-			b.buildQuery(rv.Field(i), b.genNextParentNode(parentNode, name), rv.Kind())
-		}
+		b.buildQueryForStruct(rv, parentNode)
 	case reflect.Ptr, reflect.Interface:
 		if !rv.IsNil() {
 			b.buildQuery(rv.Elem(), parentNode, parentKind)
 		}
 	default:
 		b.appendKeyValue(parentNode, rv, parentKind)
+	}
+}
+
+// build query string for map value
+func (b *encoder) buildQueryForMap(rv reflect.Value, parentNode string) {
+	for _, key := range rv.MapKeys() {
+		//If type of key is interface or ptr, check the real element of key
+		checkKey := key
+		if key.Kind() == reflect.Interface || key.Kind() == reflect.Ptr {
+			checkKey = checkKey.Elem()
+		}
+
+		//limited condition of map key type
+		if !isAccessMapKeyType(checkKey.Kind()) {
+			b.err = ErrInvalidMapKeyType{typ: checkKey.Type()}
+			return
+		}
+
+		//encode key structure to string
+		keyStr, err := b.encode(checkKey)
+		if err != nil {
+			b.err = err
+			return
+		}
+
+		b.buildQuery(rv.MapIndex(key), b.genNextParentNode(parentNode, keyStr), rv.Kind())
+	}
+}
+
+// build query string for struct value
+func (b *encoder) buildQueryForStruct(rv reflect.Value, parentNode string) {
+	rt := rv.Type()
+	for i := 0; i < rt.NumField(); i++ {
+		ft := rt.Field(i)
+		//unexported
+		if ft.PkgPath != "" && !ft.Anonymous {
+			continue
+		}
+
+		//specially handle anonymous fields
+		if ft.Anonymous && rv.Field(i).Kind() == reflect.Struct {
+			b.buildQuery(rv.Field(i), parentNode, rv.Kind())
+			continue
+		}
+
+		tag := ft.Tag.Get("query")
+		//all ignore
+		if tag == "-" {
+			continue
+		}
+
+		t := newTag(tag)
+		//get the related name
+		name := t.getName()
+		if name == "" {
+			name = ft.Name
+		}
+
+		b.buildQuery(rv.Field(i), b.genNextParentNode(parentNode, name), rv.Kind())
 	}
 }
 

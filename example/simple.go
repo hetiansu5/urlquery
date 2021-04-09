@@ -1,20 +1,20 @@
 package main
 
 import (
-	"github.com/hetiansu5/urlquery"
 	"fmt"
+	"github.com/hetiansu5/urlquery"
 )
 
-// test structure
+// A SimpleChild is test structure
 type SimpleChild struct {
 	Status bool `query:"status"`
 	Name   string
 }
 
-// test structure
+// A SimpleData is test structure
 type SimpleData struct {
 	Id         int
-	Name       string          `query:"name"`
+	Name       string `query:"name"`
 	Child      SimpleChild
 	Params     map[string]int8 `query:"p"`
 	SliceChild []SimpleChild   `query:"s"`

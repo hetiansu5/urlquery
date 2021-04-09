@@ -5,15 +5,15 @@ import (
 	"github.com/hetiansu5/urlquery"
 )
 
-//Nested struct
+// A Point is Nested struct
 type Point struct {
 	X, Y int
 }
 
-// test structure
+// A Circle is test structure
 type Circle struct {
 	Point //anonymous fields: specially handled
-	R int
+	R     int
 }
 
 func main() {

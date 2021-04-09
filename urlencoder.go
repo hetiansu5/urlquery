@@ -2,9 +2,10 @@ package urlquery
 
 import "net/url"
 
-// support user-defined global urlEncoder and have default.
 var (
+	// global URL-Encoder, priority: global > default
 	gUrlEncoder UrlEncoder
+	// default URL-Encoder
 	cUrlEncoder DefaultUrlEncoder
 )
 
@@ -21,13 +22,13 @@ func getUrlEncoder() UrlEncoder {
 	return gUrlEncoder
 }
 
-// define URL-Encoder interface
+// A UrlEncoder is a interface implementing Escape and UnEscape method
 type UrlEncoder interface {
 	Escape(s string) string
 	UnEscape(s string) (string, error)
 }
 
-// default url encoder
+// A DefaultUrlEncoder is a default URL-Encoder
 type DefaultUrlEncoder struct{}
 
 // escape text

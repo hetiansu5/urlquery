@@ -1,6 +1,7 @@
 [![Language](https://img.shields.io/badge/Language-Go-blue.svg)](https://golang.org/)
 [![GoDoc](https://godoc.org/github.com/hetiansu5/urlquery?status.svg)](https://godoc.org/github.com/hetiansu5/urlquery)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hetiansu5/urlquery)](https://goreportcard.com/report/github.com/hetiansu5/urlquery)
+[![License](https://img.shields.io/github/license/hetiansu5/urlquery)](LICENSE)
 
 ## Introduction
 A URL Query string Encoder and Parser based on go.

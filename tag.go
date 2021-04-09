@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-// tag of struct attribution
+// A tag is decoration of struct attribution
 type tag struct {
 	name    string
 	options []string

@@ -1,13 +1,13 @@
 package main
 
 import (
-	"github.com/hetiansu5/urlquery"
 	"fmt"
+	"github.com/hetiansu5/urlquery"
 	"reflect"
 	"strconv"
 )
 
-// test structure
+// An EncodeData is test structure
 type EncodeData struct {
 	Id   int    `query:"id"`
 	Name string `query:"name"`

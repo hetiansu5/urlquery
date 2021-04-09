@@ -77,7 +77,7 @@ func TestUnmarshal_NestedStructure(t *testing.T) {
 	}
 
 	if v.Children[1].Description != "" || v.Children[1].Long != 12 {
-		t.Error("Childre[1] wrong")
+		t.Error("Children[1] wrong")
 	}
 
 	if v.Children[2].Description != "" || v.Children[3].Description != "" || v.Children[4].Description != "" {

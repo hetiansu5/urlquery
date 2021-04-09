@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-// converter from go basic structure to string
+// A valueEncode is a converter from go basic structure to string
 type valueEncode func(value reflect.Value) string
 
 // converter from bool to string

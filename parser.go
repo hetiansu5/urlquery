@@ -86,128 +86,148 @@ func (p *parser) parse(rv reflect.Value, parentNode string) {
 
 	switch rv.Kind() {
 	case reflect.Ptr:
-		//If Ptr is nil and can be set, Ptr should be initialized
-		if rv.IsNil() {
-			if rv.CanSet() {
-
-				//lookup matched map data with prefix key
-				matches := p.lookup(parentNode)
-				// If none match keep nil
-				if len(matches) == 0 {
-					break
-				}
-
-				rv.Set(reflect.New(rv.Type().Elem()))
-				p.parse(rv.Elem(), parentNode)
-			}
-		} else {
-			p.parse(rv.Elem(), parentNode)
-		}
+		p.parseForPrt(rv, parentNode)
 	case reflect.Interface:
 		p.parse(rv.Elem(), parentNode)
 	case reflect.Map:
-		if !rv.CanSet() {
-			break
-		}
-
-		//limited condition of map key and value type
-		//If not meet the condition, will return error
-		if !isAccessMapKeyType(rv.Type().Key().Kind()) || !isAccessMapValueType(rv.Type().Elem().Kind()) {
-			p.err = ErrInvalidMapKeyType{typ: rv.Type()}
-			return
-		}
-
-		matches := p.lookup(parentNode)
-		size := len(matches)
-
-		if size == 0 {
-			break
-		}
-
-		mapReflect := reflect.MakeMapWithSize(rv.Type(), size)
-		for k, _ := range matches {
-			reflectKey, err := p.decode(rv.Type().Key(), k)
-			if err != nil {
-				p.err = err
-				return
-			}
-
-			value, ok := p.get(p.genNextParentNode(parentNode, k))
-			if !ok {
-				continue
-			}
-
-			reflectValue, err := p.decode(rv.Type().Elem(), value)
-			if err != nil {
-				p.err = err
-				return
-			}
-
-			mapReflect.SetMapIndex(reflectKey, reflectValue)
-		}
-		rv.Set(mapReflect)
+		p.parseForMap(rv, parentNode)
 	case reflect.Array:
 		for i := 0; i < rv.Cap(); i++ {
 			p.parse(rv.Index(i), p.genNextParentNode(parentNode, strconv.Itoa(i)))
 		}
 	case reflect.Slice:
-		if !rv.CanSet() {
-			break
-		}
-
-		//lookup matched map data with prefix key
-		matches := p.lookupForSlice(parentNode)
-		if len(matches) == 0 {
-			break
-		}
-
-		//get max cap of slice
-		maxCap := 0
-		for i, _ := range matches {
-			if i+1 > maxCap {
-				maxCap = i + 1
-			}
-		}
-
-		//If slice is nil or cap of slice is less than max cap, slice should be reset correctly
-		if rv.IsNil() || maxCap > rv.Cap() {
-			rv.Set(reflect.MakeSlice(rv.Type(), maxCap, maxCap))
-		}
-
-		for i, _ := range matches {
-			p.parse(rv.Index(i), p.genNextParentNode(parentNode, strconv.Itoa(i)))
-		}
+		p.parseForSlice(rv, parentNode)
 	case reflect.Struct:
-		for i := 0; i < rv.NumField(); i++ {
-			ft := rv.Type().Field(i)
-
-			//specially handle anonymous fields
-			if ft.Anonymous && rv.Field(i).Kind() == reflect.Struct {
-				p.parse(rv.Field(i), parentNode)
-				continue
-			}
-
-			tag := ft.Tag.Get("query")
-			//all ignore
-			if tag == "-" {
-				continue
-			}
-
-			t := newTag(tag)
-			name := t.getName()
-			if name == "" {
-				name = ft.Name
-			}
-
-			p.parse(rv.Field(i), p.genNextParentNode(parentNode, name))
-		}
+		p.parseForStruct(rv, parentNode)
 	default:
-		p.parseValue(parentNode, rv)
+		p.parseValue(rv, parentNode)
+	}
+}
+
+// parse for pointer value
+func (p *parser) parseForPrt(rv reflect.Value, parentNode string) {
+	//If Ptr is nil and can be set, Ptr should be initialized
+	if rv.IsNil() {
+		if rv.CanSet() {
+
+			//lookup matched map data with prefix key
+			matches := p.lookup(parentNode)
+			// If none match keep nil
+			if len(matches) == 0 {
+				return
+			}
+
+			rv.Set(reflect.New(rv.Type().Elem()))
+			p.parse(rv.Elem(), parentNode)
+		}
+	} else {
+		p.parse(rv.Elem(), parentNode)
+	}
+}
+
+// parse for map value
+func (p *parser) parseForMap(rv reflect.Value, parentNode string) {
+	if !rv.CanSet() {
+		return
+	}
+
+	//limited condition of map key and value type
+	//If not meet the condition, will return error
+	if !isAccessMapKeyType(rv.Type().Key().Kind()) || !isAccessMapValueType(rv.Type().Elem().Kind()) {
+		p.err = ErrInvalidMapKeyType{typ: rv.Type()}
+		return
+	}
+
+	matches := p.lookup(parentNode)
+	size := len(matches)
+
+	if size == 0 {
+		return
+	}
+
+	mapReflect := reflect.MakeMapWithSize(rv.Type(), size)
+	for k := range matches {
+		reflectKey, err := p.decode(rv.Type().Key(), k)
+		if err != nil {
+			p.err = err
+			return
+		}
+
+		value, ok := p.get(p.genNextParentNode(parentNode, k))
+		if !ok {
+			continue
+		}
+
+		reflectValue, err := p.decode(rv.Type().Elem(), value)
+		if err != nil {
+			p.err = err
+			return
+		}
+
+		mapReflect.SetMapIndex(reflectKey, reflectValue)
+	}
+	rv.Set(mapReflect)
+}
+
+// parse for slice value
+func (p *parser) parseForSlice(rv reflect.Value, parentNode string) {
+	if !rv.CanSet() {
+		return
+	}
+
+	//lookup matched map data with prefix key
+	matches := p.lookupForSlice(parentNode)
+	if len(matches) == 0 {
+		return
+	}
+
+	//get max cap of slice
+	maxCap := 0
+	for i := range matches {
+		if i+1 > maxCap {
+			maxCap = i + 1
+		}
+	}
+
+	//If slice is nil or cap of slice is less than max cap, slice should be reset correctly
+	if rv.IsNil() || maxCap > rv.Cap() {
+		rv.Set(reflect.MakeSlice(rv.Type(), maxCap, maxCap))
+	}
+
+	for i := range matches {
+		p.parse(rv.Index(i), p.genNextParentNode(parentNode, strconv.Itoa(i)))
+	}
+}
+
+// parse for struct value
+func (p *parser) parseForStruct(rv reflect.Value, parentNode string) {
+	for i := 0; i < rv.NumField(); i++ {
+		ft := rv.Type().Field(i)
+
+		//specially handle anonymous fields
+		if ft.Anonymous && rv.Field(i).Kind() == reflect.Struct {
+			p.parse(rv.Field(i), parentNode)
+			continue
+		}
+
+		tag := ft.Tag.Get("query")
+		//all ignore
+		if tag == "-" {
+			continue
+		}
+
+		t := newTag(tag)
+		name := t.getName()
+		if name == "" {
+			name = ft.Name
+		}
+
+		p.parse(rv.Field(i), p.genNextParentNode(parentNode, name))
 	}
 }
 
 // parse text to specified-type value, set into rv
-func (p *parser) parseValue(parentNode string, rv reflect.Value) {
+func (p *parser) parseValue(rv reflect.Value, parentNode string) {
 	if !rv.CanSet() {
 		return
 	}
@@ -247,7 +267,7 @@ func (p *parser) getDecodeFunc(kind reflect.Kind) valueDecode {
 // lookup by prefix matching
 func (p *parser) lookup(prefix string) map[string]bool {
 	data := map[string]bool{}
-	for k, _ := range p.container {
+	for k := range p.container {
 		if strings.HasPrefix(k, prefix) {
 			pre, _ := unpackQueryKey(k[len(prefix):])
 			data[pre] = true
@@ -260,7 +280,7 @@ func (p *parser) lookup(prefix string) map[string]bool {
 func (p *parser) lookupForSlice(prefix string) map[int]bool {
 	tmp := p.lookup(prefix)
 	data := map[int]bool{}
-	for k, _ := range tmp {
+	for k := range tmp {
 		i, err := strconv.Atoi(k)
 		if err != nil {
 			p.err = err

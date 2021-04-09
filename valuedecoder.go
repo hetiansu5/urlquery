@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-// convert from string to go basic structure
+// A valueDecode is a converter from string to go basic structure
 type valueDecode func(string) (reflect.Value, error)
 
 // convert from string to bool

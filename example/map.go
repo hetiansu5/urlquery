@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/hetiansu5/urlquery"
 	"fmt"
+	"github.com/hetiansu5/urlquery"
 )
 
 func main() {

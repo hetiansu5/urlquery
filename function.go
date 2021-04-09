@@ -6,8 +6,8 @@ import (
 	"reflect"
 )
 
-//common function library
 var (
+	//
 	accessMapTypes = map[reflect.Kind]bool{
 		reflect.Bool:    true,
 		reflect.Int:     true,
@@ -27,11 +27,13 @@ var (
 	}
 )
 
+// check if reflect.Kind of map's key is valid
 func isAccessMapKeyType(kind reflect.Kind) bool {
 	_, ok := accessMapTypes[kind]
 	return ok
 }
 
+// check if reflect.Kind of map's value is valid
 func isAccessMapValueType(kind reflect.Kind) bool {
 	return isAccessMapKeyType(kind)
 }
@@ -77,7 +79,7 @@ func genNextParentNode(parentNode, key string) string {
 	return key
 }
 
-// Is Zero-value
+// check if value is zero-value
 func isZeroValue(v reflect.Value) bool {
 	switch v.Kind() {
 	case reflect.Bool:

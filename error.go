@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-// customized error type
+// An ErrUnhandledType is a customized error type
 type ErrUnhandledType struct {
 	typ reflect.Type
 }
@@ -14,7 +14,7 @@ func (e ErrUnhandledType) Error() string {
 	return "failed to unhandled type(" + e.typ.String() + ")"
 }
 
-// customized error type
+// An ErrInvalidUnmarshalError is a customized error type
 type ErrInvalidUnmarshalError struct {
 	typ reflect.Type
 }
@@ -30,7 +30,7 @@ func (e ErrInvalidUnmarshalError) Error() string {
 	return "failed to unmarshal(nil " + e.typ.String() + ")"
 }
 
-// customized error type
+// An ErrUnsupportedBitSize is a customized error type
 type ErrUnsupportedBitSize struct {
 	bitSize int
 }
@@ -39,7 +39,7 @@ func (e ErrUnsupportedBitSize) Error() string {
 	return "failed to handle unsupported bitSize(" + strconv.Itoa(e.bitSize) + ")"
 }
 
-// customized error type
+// An ErrTranslated is a customized error type
 type ErrTranslated struct {
 	err error
 }
@@ -48,7 +48,7 @@ func (e ErrTranslated) Error() string {
 	return "failed to translate:" + e.err.Error()
 }
 
-// customized error type
+// An ErrInvalidMapKeyType is a customized error type
 type ErrInvalidMapKeyType struct {
 	typ reflect.Type
 }

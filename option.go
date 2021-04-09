@@ -6,7 +6,7 @@ type options struct {
 	needEmptyValue bool
 }
 
-// an func type for applying diff options
+// An Option is a func type for applying diff options
 type Option func(*options)
 
 // support customized URL-Encoder option

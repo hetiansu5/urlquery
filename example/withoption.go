@@ -1,18 +1,18 @@
 package main
 
 import (
-	"github.com/hetiansu5/urlquery"
 	"fmt"
+	"github.com/hetiansu5/urlquery"
 	"net/url"
 )
 
-//support self-defined options:  self-defined UrlEncoder, not ignoring zero-value,
+// A OptionChild is test structure
 type OptionChild struct {
 	Status bool `query:"status"`
 	Name   string
 }
 
-// test structure
+// An OptionData is test structure
 type OptionData struct {
 	Id     int
 	Name   string          `query:"name"`
@@ -21,7 +21,7 @@ type OptionData struct {
 	Slice  []OptionChild
 }
 
-// test structure
+// A SelfUrlEncoder is test structure
 type SelfUrlEncoder struct{}
 
 // test func
