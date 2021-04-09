@@ -2,6 +2,7 @@
 [![GoDoc](https://godoc.org/github.com/hetiansu5/urlquery?status.svg)](https://godoc.org/github.com/hetiansu5/urlquery)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hetiansu5/urlquery)](https://goreportcard.com/report/github.com/hetiansu5/urlquery)
 [![License](https://img.shields.io/github/license/hetiansu5/urlquery)](LICENSE)
+[![codecov](https://codecov.io/gh/hetiansu5/urlquery/branch/master/graph/badge.svg?token=N5NWVBHRTY)](https://codecov.io/gh/hetiansu5/urlquery)
 
 ## Introduction
 A URL Query string Encoder and Parser based on go.
@@ -10,7 +11,7 @@ A URL Query string Encoder and Parser based on go.
 - Encode from go structure to URL Query string
 
 ## Keywords
-x-www-form-urlencoded HTTP-Query URLEncode URL-Query go
+x-www-form-urlencoded Query Encoder URL-Query Http-Query go
 
 ## Feature
 - Support full go structure Translation
@@ -18,7 +19,7 @@ x-www-form-urlencoded HTTP-Query URLEncode URL-Query go
     - Complex Structure: Array Slice Map Struct
     - Nested Struct with above Basic or Complex Structure
 - Support top-level structure: Map, Slice or Array, not only Struct
-- Support self-defined URL-Encode rule [example](example/withoption.go)
+- Support self-defined URL Query Encode rule [example](example/withoption.go)
 - Support self-defined key name relation rule [example](example/simple.go)
 - Support self-defined value encode and decode function [example](example/converter.go)
 - Support to control whether ignoring Zero-value of struct member [example](example/withoption.go)

@@ -20,7 +20,7 @@ type encoder struct {
 	err           error
 	opts          options
 	mutex         sync.Mutex
-	urlEncoder    UrlEncoder
+	queryEncoder  QueryEncoder
 	encodeFuncMap map[reflect.Kind]valueEncode
 }
 
@@ -35,12 +35,12 @@ func NewEncoder(opts ...Option) *encoder {
 	return b
 }
 
-// reset UrlEncoder
-func (b *encoder) resetUrlEncoder() {
-	if b.opts.urlEncoder != nil {
-		b.urlEncoder = b.opts.urlEncoder
+// reset query encoder
+func (b *encoder) resetQueryEncoder() {
+	if b.opts.queryEncoder != nil {
+		b.queryEncoder = b.opts.queryEncoder
 	} else {
-		b.urlEncoder = getUrlEncoder()
+		b.queryEncoder = getQueryEncoder()
 	}
 }
 
@@ -76,7 +76,7 @@ func (b *encoder) buildQuery(rv reflect.Value, parentNode string, parentKind ref
 // build query string for map value
 func (b *encoder) buildQueryForMap(rv reflect.Value, parentNode string) {
 	for _, key := range rv.MapKeys() {
-		//If type of key is interface or ptr, check the real element of key
+		//If type of key is interface or ptr, check the pointed element of key
 		checkKey := key
 		if key.Kind() == reflect.Interface || key.Kind() == reflect.Ptr {
 			checkKey = checkKey.Elem()
@@ -150,7 +150,7 @@ func (b *encoder) appendKeyValue(key string, rv reflect.Value, parentKind reflec
 		return
 	}
 
-	b.buffer.WriteString(b.urlEncoder.Escape(key) + SymbolEqual + b.urlEncoder.Escape(s) + SymbolAnd)
+	b.buffer.WriteString(b.queryEncoder.Escape(key) + SymbolEqual + b.queryEncoder.Escape(s) + SymbolAnd)
 }
 
 // encode a specified-type value to string
@@ -186,7 +186,7 @@ func (b *encoder) Marshal(data interface{}) ([]byte, error) {
 	//for duplicate call
 	b.buffer = new(bytes.Buffer)
 	b.err = nil
-	b.resetUrlEncoder()
+	b.resetQueryEncoder()
 
 	rv := reflect.ValueOf(data)
 	b.buildQuery(rv, "", reflect.Interface)

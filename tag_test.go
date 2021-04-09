@@ -12,7 +12,7 @@ func Test_newTag(t *testing.T) {
 	}
 
 	if len(tg.options) != 2 {
-		t.Error("options's length is wrong")
+		t.Error("the length of options is wrong")
 	}
 
 	if !tg.contains("ignore") {
@@ -21,6 +21,10 @@ func Test_newTag(t *testing.T) {
 
 	if !tg.contains("vip") {
 		t.Error("options vip is not found")
+	}
+
+	if tg.contains("vip1") {
+		t.Error("options vip1 is found")
 	}
 }
 

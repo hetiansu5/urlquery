@@ -20,6 +20,13 @@ type TestParseInfo struct {
 	Params   map[byte]int8
 	status   bool
 	UintPtr  uintptr
+	Int16    int16
+	Int64    int64
+	Uint     uint
+	Uint32   uint32
+	Float32  float32
+	Float64  float64
+	Bool     bool
 }
 
 func TestUnmarshal_DuplicateCall(t *testing.T) {
@@ -43,7 +50,8 @@ func TestUnmarshal_DuplicateCall(t *testing.T) {
 func TestUnmarshal_NestedStructure(t *testing.T) {
 	var data = "Id=1&name=test&child[desc]=c1&child[Long]=10&childPtr[Long]=2&childPtr[Description]=b" +
 		"&children[0][desc]=d1&children[1][Long]=12&children[5][desc]=d5&children[5][Long]=50&desc=rtt" +
-		"&Params[120]=1&Params[121]=2&status=1&UintPtr=300"
+		"&Params[120]=1&Params[121]=2&status=1&UintPtr=300&Int16=1&Int64=64&Uint=22&Uint32=5&Float32=1.3" +
+		"&Float64=5.64&Bool=0"
 	data = encodeSquareBracket(data)
 	v := &TestParseInfo{}
 	err := Unmarshal([]byte(data), v)

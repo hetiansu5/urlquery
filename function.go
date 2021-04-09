@@ -81,6 +81,7 @@ func genNextParentNode(parentNode, key string) string {
 
 // check if value is zero-value
 func isZeroValue(v reflect.Value) bool {
+	v.IsZero()
 	switch v.Kind() {
 	case reflect.Bool:
 		return !v.Bool()
@@ -100,9 +101,9 @@ func isZeroValue(v reflect.Value) bool {
 			}
 		}
 		return true
-	case reflect.Chan, reflect.Func, reflect.Interface, reflect.UnsafePointer:
+	case reflect.Chan, reflect.Func, reflect.Ptr, reflect.Interface, reflect.UnsafePointer:
 		return v.IsNil()
-	case reflect.String, reflect.Map, reflect.Ptr, reflect.Slice:
+	case reflect.String, reflect.Map, reflect.Slice:
 		return v.Len() == 0
 	case reflect.Struct:
 		for i := 0; i < v.NumField(); i++ {

@@ -2,6 +2,8 @@ package urlquery
 
 import (
 	"fmt"
+	"reflect"
+	"strconv"
 	"testing"
 )
 
@@ -25,7 +27,9 @@ type BuilderInfo struct {
 func TestMarshal(t *testing.T) {
 	data := getMockData()
 
+	SetGlobalQueryEncoder(defaultQueryEncoder)
 	_, err := Marshal(data)
+	SetGlobalQueryEncoder(nil)
 
 	if err != nil {
 		t.Error(err)
@@ -35,7 +39,8 @@ func TestMarshal(t *testing.T) {
 func TestMarshal_Struct(t *testing.T) {
 	data := getMockData2()
 
-	bytes, err := Marshal(data)
+	encoder := NewEncoder(WithQueryEncoder(DefaultQueryEncoder{}), WithNeedEmptyValue(false))
+	bytes, err := encoder.Marshal(data)
 
 	if err != nil {
 		t.Error(err)
@@ -75,7 +80,7 @@ func TestMarshal_NilPtr_Struct(t *testing.T) {
 
 	if v.Name != "child3" || v.status != false || v.Child.Height != 0 || len(v.Children) != 5 {
 		fmt.Println(v.Name, v.status, v.Child.Height, v.Children)
-		t.Error("Marshal Unmarshal is not equal")
+		t.Error("Marshal is not equal to Unmarshal")
 		return
 	}
 
@@ -99,7 +104,7 @@ func TestMarshal_Slice(t *testing.T) {
 	}
 
 	if string(bytes) != "0=a&1=b" {
-		t.Error("failed to Marchal slice")
+		t.Error("failed to Marshal slice")
 	}
 }
 
@@ -113,7 +118,7 @@ func TestMarshal_Array(t *testing.T) {
 	}
 
 	if string(bytes) != "0=10&1=200&2=50" {
-		t.Error("failed to Marchal slice")
+		t.Error("failed to Marshal slice")
 	}
 }
 
@@ -148,12 +153,16 @@ func TestMarshal_DuplicateCall(t *testing.T) {
 	}
 
 	encoder := NewEncoder()
+	encoder.RegisterEncodeFunc(reflect.Int64, func(value reflect.Value) string {
+		return strconv.FormatInt(value.Int(), 10)
+	})
 	encoder.Marshal(d1)
 
 	d2 := BuilderChild{
 		Description: "bb",
 		Long:        200,
 	}
+
 	bytes2, err := encoder.Marshal(d2)
 	if err != nil {
 		t.Error(err)
@@ -161,6 +170,17 @@ func TestMarshal_DuplicateCall(t *testing.T) {
 
 	if string(bytes2) != "desc=bb&Long=200" {
 		t.Error("failed to Marshal duplicate call")
+	}
+}
+
+func TestEncoder_encodeError(t *testing.T) {
+	encoder := NewEncoder()
+	data := map[string]complex64{
+		"d": complex(1, 2),
+	}
+	_, err := encoder.Marshal(data)
+	if _, ok := err.(ErrUnhandledType); !ok {
+		t.Error("it is not ErrUnhandledType")
 	}
 }
 
@@ -179,11 +199,11 @@ func BenchmarkMarshal(b *testing.B) {
 func getMockData() map[string]interface{} {
 	var (
 		f32 = float32(1.2)
-		f64 = float64(13.4343453535343242342)
 		i8  = int8(3)
 		i64 = int64(9999999 * 9999999)
 		u64 = uint16(567)
 	)
+	var f64 float64 = 13.4343453535343242342
 	return map[string]interface{}{
 		"id":     1,
 		"fit":    true,

@@ -21,16 +21,16 @@ type OptionData struct {
 	Slice  []OptionChild
 }
 
-// A SelfUrlEncoder is test structure
-type SelfUrlEncoder struct{}
+// A SelfQueryEncoder is test structure
+type SelfQueryEncoder struct{}
 
 // Escape is test func
-func (u SelfUrlEncoder) Escape(s string) string {
+func (u SelfQueryEncoder) Escape(s string) string {
 	return url.QueryEscape(s)
 }
 
 // UnEscape is test func
-func (u SelfUrlEncoder) UnEscape(s string) (string, error) {
+func (u SelfQueryEncoder) UnEscape(s string) (string, error) {
 	return url.QueryUnescape(s)
 }
 
@@ -56,7 +56,7 @@ func main() {
 	//Marshal: from go structure to http-query string
 
 	builder := urlquery.NewEncoder(urlquery.WithNeedEmptyValue(true),
-		urlquery.WithUrlEncoder(SelfUrlEncoder{}))
+		urlquery.WithQueryEncoder(SelfQueryEncoder{}))
 	bytes, err := builder.Marshal(data)
 	if err != nil {
 		fmt.Println(err)
@@ -66,7 +66,7 @@ func main() {
 
 	//Unmarshal: from http-query  string to go structure
 	v := &OptionData{}
-	parser := urlquery.NewParser(urlquery.WithUrlEncoder(SelfUrlEncoder{}))
+	parser := urlquery.NewParser(urlquery.WithQueryEncoder(SelfQueryEncoder{}))
 	err = parser.Unmarshal(bytes, v)
 	if err != nil {
 		fmt.Println(err)

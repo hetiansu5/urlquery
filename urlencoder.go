@@ -3,40 +3,40 @@ package urlquery
 import "net/url"
 
 var (
-	// global URL-Encoder, priority: global > default
-	gUrlEncoder UrlEncoder
-	// default URL-Encoder
-	cUrlEncoder DefaultUrlEncoder
+	// global query encoder, priority: global > default
+	gQueryEncoder QueryEncoder
+	// default query encoder
+	defaultQueryEncoder DefaultQueryEncoder
 )
 
-// SetGlobalUrlEncoder set global URL-Encode
-func SetGlobalUrlEncoder(u UrlEncoder) {
-	gUrlEncoder = u
+// SetGlobalQueryEncoder set global query encoder
+func SetGlobalQueryEncoder(u QueryEncoder) {
+	gQueryEncoder = u
 }
 
-// get URL-Encoder
-func getUrlEncoder() UrlEncoder {
-	if gUrlEncoder == nil {
-		return cUrlEncoder
+// get query encoder
+func getQueryEncoder() QueryEncoder {
+	if gQueryEncoder == nil {
+		return defaultQueryEncoder
 	}
-	return gUrlEncoder
+	return gQueryEncoder
 }
 
-// A UrlEncoder is a interface implementing Escape and UnEscape method
-type UrlEncoder interface {
+// A QueryEncoder is a interface implementing Escape and UnEscape method
+type QueryEncoder interface {
 	Escape(s string) string
 	UnEscape(s string) (string, error)
 }
 
-// A DefaultUrlEncoder is a default URL-Encoder
-type DefaultUrlEncoder struct{}
+// A DefaultQueryEncoder is a default URL-Encoder
+type DefaultQueryEncoder struct{}
 
 // Escape text
-func (u DefaultUrlEncoder) Escape(s string) string {
+func (u DefaultQueryEncoder) Escape(s string) string {
 	return url.QueryEscape(s)
 }
 
 // UnEscape text
-func (u DefaultUrlEncoder) UnEscape(s string) (string, error) {
+func (u DefaultQueryEncoder) UnEscape(s string) (string, error) {
 	return url.QueryUnescape(s)
 }

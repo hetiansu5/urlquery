@@ -14,7 +14,7 @@ type parser struct {
 	err           error
 	opts          options
 	mutex         sync.Mutex
-	urlEncoder    UrlEncoder
+	queryEncoder  QueryEncoder
 	decodeFuncMap map[reflect.Kind]valueDecode
 }
 
@@ -35,12 +35,12 @@ func (p *parser) init(data []byte) (err error) {
 	for _, value := range arr {
 		ns := strings.SplitN(string(value), SymbolEqual, 2)
 		if len(ns) > 1 {
-			ns[0], err = p.urlEncoder.UnEscape(ns[0])
+			ns[0], err = p.queryEncoder.UnEscape(ns[0])
 			if err != nil {
 				return
 			}
 
-			ns[1], err = p.urlEncoder.UnEscape(ns[1])
+			ns[1], err = p.queryEncoder.UnEscape(ns[1])
 			if err != nil {
 				return
 			}
@@ -64,12 +64,12 @@ func (p *parser) init(data []byte) (err error) {
 	return
 }
 
-// reset specified URL-Encoder
-func (p *parser) resetUrlEncoder() {
-	if p.opts.urlEncoder != nil {
-		p.urlEncoder = p.opts.urlEncoder
+// reset specified query encoder
+func (p *parser) resetQueryEncoder() {
+	if p.opts.queryEncoder != nil {
+		p.queryEncoder = p.opts.queryEncoder
 	} else {
-		p.urlEncoder = getUrlEncoder()
+		p.queryEncoder = getQueryEncoder()
 	}
 }
 
@@ -311,12 +311,11 @@ func (p *parser) Unmarshal(data []byte, v interface{}) (err error) {
 	//for duplicate use
 	p.container = map[string]string{}
 	p.err = nil
-	p.resetUrlEncoder()
+	p.resetQueryEncoder()
 
 	rv := reflect.ValueOf(v)
-	reflect.TypeOf(v)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
-		return ErrInvalidUnmarshalError{typ: reflect.TypeOf(v)}
+		return ErrInvalidUnmarshalError{}
 	}
 
 	err = p.init(data)

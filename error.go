@@ -15,19 +15,10 @@ func (e ErrUnhandledType) Error() string {
 }
 
 // An ErrInvalidUnmarshalError is a customized error
-type ErrInvalidUnmarshalError struct {
-	typ reflect.Type
-}
+type ErrInvalidUnmarshalError struct{}
 
 func (e ErrInvalidUnmarshalError) Error() string {
-	if e.typ == nil {
-		return "failed to unmarshal(nil)"
-	}
-
-	if e.typ.Kind() != reflect.Ptr {
-		return "failed to unmarshal(non-pointer " + e.typ.String() + ")"
-	}
-	return "failed to unmarshal(nil " + e.typ.String() + ")"
+	return "failed to unmarshal(non-pointer)"
 }
 
 // An ErrUnsupportedBitSize is a customized error
