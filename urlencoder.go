@@ -9,7 +9,7 @@ var (
 	cUrlEncoder DefaultUrlEncoder
 )
 
-// set global URL-Encode
+// SetGlobalUrlEncoder set global URL-Encode
 func SetGlobalUrlEncoder(u UrlEncoder) {
 	gUrlEncoder = u
 }
@@ -31,12 +31,12 @@ type UrlEncoder interface {
 // A DefaultUrlEncoder is a default URL-Encoder
 type DefaultUrlEncoder struct{}
 
-// escape text
+// Escape text
 func (u DefaultUrlEncoder) Escape(s string) string {
 	return url.QueryEscape(s)
 }
 
-// unescape text
+// UnEscape text
 func (u DefaultUrlEncoder) UnEscape(s string) (string, error) {
 	return url.QueryUnescape(s)
 }

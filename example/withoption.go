@@ -24,12 +24,12 @@ type OptionData struct {
 // A SelfUrlEncoder is test structure
 type SelfUrlEncoder struct{}
 
-// test func
+// Escape is test func
 func (u SelfUrlEncoder) Escape(s string) string {
 	return url.QueryEscape(s)
 }
 
-// test func
+// UnEscape is test func
 func (u SelfUrlEncoder) UnEscape(s string) (string, error) {
 	return url.QueryUnescape(s)
 }

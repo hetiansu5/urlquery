@@ -12,9 +12,8 @@ type valueEncode func(value reflect.Value) string
 func boolEncode(value reflect.Value) string {
 	if value.Bool() {
 		return "1"
-	} else {
-		return "0"
 	}
+	return "0"
 }
 
 // converter from int(8-64) to string

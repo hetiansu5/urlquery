@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	// Symbol character = of querystring
+	// SymbolEqual is key character of querystring
 	SymbolEqual = "="
-	// Symbol character & of querystring
+	// SymbolAnd is key character of querystring
 	SymbolAnd = "&"
 )
 
@@ -24,7 +24,7 @@ type encoder struct {
 	encodeFuncMap map[reflect.Kind]valueEncode
 }
 
-// new encoder object
+// NewEncoder return new encoder object
 // do some option initialization
 func NewEncoder(opts ...Option) *encoder {
 	b := &encoder{}
@@ -177,8 +177,8 @@ func (b *encoder) RegisterEncodeFunc(kind reflect.Kind, encode valueEncode) {
 	b.encodeFuncMap[kind] = encode
 }
 
-// encode go structure to string
-// Thread safety
+// Marshal do encoding go structure to string
+// it is thread safety
 func (b *encoder) Marshal(data interface{}) ([]byte, error) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
@@ -201,8 +201,8 @@ func (b *encoder) Marshal(data interface{}) ([]byte, error) {
 	return bs[:len(bs)-1], nil
 }
 
-// encode go structure to string
-// Thread safety
+// Marshal do encoding go structure to string
+// it is thread safety
 func Marshal(data interface{}) ([]byte, error) {
 	b := NewEncoder()
 	return b.Marshal(data)
