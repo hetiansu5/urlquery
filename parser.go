@@ -18,7 +18,7 @@ type parser struct {
 	decodeFuncMap map[reflect.Kind]valueDecode
 }
 
-// new a parser object
+// NewParser make a new parser object
 // do some option initialization
 func NewParser(opts ...Option) *parser {
 	p := &parser{}
@@ -302,8 +302,8 @@ func (p *parser) RegisterDecodeFunc(kind reflect.Kind, decode valueDecode) {
 	p.decodeFuncMap[kind] = decode
 }
 
-// decode string to go structure
-// Thread safety
+// Unmarshal is supposed to decode string to go structure
+// It is thread safety
 func (p *parser) Unmarshal(data []byte, v interface{}) (err error) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
@@ -331,8 +331,8 @@ func (p *parser) Unmarshal(data []byte, v interface{}) (err error) {
 	return p.err
 }
 
-// decode string to go structure
-// Thread safety
+// Unmarshal is supposed to decode string to go structure
+// It is thread safety
 func Unmarshal(data []byte, v interface{}) error {
 	p := NewParser()
 	return p.Unmarshal(data, v)
