@@ -7,12 +7,12 @@ import (
 )
 
 //support self-defined options:  self-defined UrlEncoder, not ignoring zero-value,
-
 type OptionChild struct {
 	Status bool `query:"status"`
 	Name   string
 }
 
+// test structure
 type OptionData struct {
 	Id     int
 	Name   string          `query:"name"`
@@ -21,12 +21,15 @@ type OptionData struct {
 	Slice  []OptionChild
 }
 
+// test structure
 type SelfUrlEncoder struct{}
 
+// test func
 func (u SelfUrlEncoder) Escape(s string) string {
 	return url.QueryEscape(s)
 }
 
+// test func
 func (u SelfUrlEncoder) UnEscape(s string) (string, error) {
 	return url.QueryUnescape(s)
 }

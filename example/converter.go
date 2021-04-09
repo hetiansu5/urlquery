@@ -7,6 +7,7 @@ import (
 	"strconv"
 )
 
+// test structure
 type EncodeData struct {
 	Id   int    `query:"id"`
 	Name string `query:"name"`

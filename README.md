@@ -1,13 +1,17 @@
-### Introduction
+[![Language](https://img.shields.io/badge/Language-Go-blue.svg)](https://golang.org/)
+[![GoDoc](https://godoc.org/github.com/hetiansu5/urlquery?status.svg)](https://godoc.org/github.com/hetiansu5/urlquery)
+[![Go Report Card](https://goreportcard.com/badge/github.com/hetiansu5/urlquery)](https://goreportcard.com/report/github.com/hetiansu5/urlquery)
+
+## Introduction
 A URL Query string Encoder and Parser based on go.
 
 - Parse from URL Query string to go structure
 - Encode from go structure to URL Query string
 
-### Keywords
+## Keywords
 x-www-form-urlencoded HTTP-Query URLEncode URL-Query go
 
-### Feature
+## Feature
 - Support full go structure Translation
     - Basic Structure: Int[8,16,32,64] Uint[8,16,32,64] String Bool Float[32,64] Byte Rune
     - Complex Structure: Array Slice Map Struct
@@ -19,7 +23,7 @@ x-www-form-urlencoded HTTP-Query URLEncode URL-Query go
 - Support to control whether ignoring Zero-value of struct member [example](example/withoption.go)
 
 
-### Quick Start
+## Quick Start
 More to see [example](example/withoption.go)
 
 ```golang

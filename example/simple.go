@@ -5,11 +5,13 @@ import (
 	"fmt"
 )
 
+// test structure
 type SimpleChild struct {
 	Status bool `query:"status"`
 	Name   string
 }
 
+// test structure
 type SimpleData struct {
 	Id         int
 	Name       string          `query:"name"`

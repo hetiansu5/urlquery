@@ -5,10 +5,10 @@ import (
 	"strconv"
 )
 
-//translator from go basic structure to string
-
+// converter from go basic structure to string
 type valueEncode func(value reflect.Value) string
 
+// converter from bool to string
 func boolEncode(value reflect.Value) string {
 	if value.Bool() {
 		return "1"
@@ -17,22 +17,27 @@ func boolEncode(value reflect.Value) string {
 	}
 }
 
+// converter from int(8-64) to string
 func intEncode(value reflect.Value) string {
 	return strconv.FormatInt(value.Int(), 10)
 }
 
+// converter from uint(8-64) to string
 func uintEncode(value reflect.Value) string {
 	return strconv.FormatUint(value.Uint(), 10)
 }
 
+// converter from float,double to string
 func floatEncode(value reflect.Value) string {
 	return strconv.FormatFloat(value.Float(), 'f', -1, 64)
 }
 
+// converter from string to string
 func stringEncode(value reflect.Value) string {
 	return value.String()
 }
 
+// get encode func for specified reflect kind
 func getEncodeFunc(kind reflect.Kind) valueEncode {
 	switch kind {
 	case reflect.Bool:

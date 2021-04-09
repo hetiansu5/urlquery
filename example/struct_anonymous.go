@@ -6,11 +6,11 @@ import (
 )
 
 //Nested struct
-
 type Point struct {
 	X, Y int
 }
 
+// test structure
 type Circle struct {
 	Point //anonymous fields: specially handled
 	R int

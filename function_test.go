@@ -32,7 +32,7 @@ func Test_repackArrayQueryKey(t *testing.T) {
 	key := "[hts][0]"
 	target := repackArrayQueryKey(key)
 	if target != "[hts][]" {
-		t.Error("failed to execute repackArrayQueryKey funtion")
+		t.Error("failed to execute repackArrayQueryKey function")
 	}
 }
 
@@ -40,7 +40,7 @@ func Test_repackArrayQueryKey1(t *testing.T) {
 	key := "hts]"
 	target := repackArrayQueryKey(key)
 	if target != "hts]" {
-		t.Error("failed to execute repackArrayQueryKey funtion")
+		t.Error("failed to execute repackArrayQueryKey function")
 	}
 }
 
@@ -48,7 +48,7 @@ func Test_repackArrayQueryKey2(t *testing.T) {
 	key := "[hts"
 	target := repackArrayQueryKey(key)
 	if target != "[hts" {
-		t.Error("failed to execute repackArrayQueryKey funtion")
+		t.Error("failed to execute repackArrayQueryKey function")
 	}
 }
 

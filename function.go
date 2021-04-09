@@ -1,13 +1,12 @@
 package urlquery
 
 import (
-	"reflect"
-	"math"
 	"fmt"
+	"math"
+	"reflect"
 )
 
 //common function library
-
 var (
 	accessMapTypes = map[reflect.Kind]bool{
 		reflect.Bool:    true,
@@ -37,8 +36,8 @@ func isAccessMapValueType(kind reflect.Kind) bool {
 	return isAccessMapKeyType(kind)
 }
 
-//students[0][id] -> students, [0][id]
-//[students][0][id] -> students, [0][id]
+// students[0][id] -> students, [0][id]
+// [students][0][id] -> students, [0][id]
 func unpackQueryKey(key string) (pre, suf string) {
 	if len(key) > 0 && key[0] == '[' {
 		key = key[1:]
@@ -57,7 +56,7 @@ func unpackQueryKey(key string) (pre, suf string) {
 	return key, ""
 }
 
-//if key like `students[0]` , repack it to `students[]`
+// if key like `students[0]` , repack it to `students[]`
 func repackArrayQueryKey(key string) string {
 	l := len(key)
 	if l > 0 && key[l-1] == ']' {
@@ -70,16 +69,15 @@ func repackArrayQueryKey(key string) string {
 	return key
 }
 
-//generate next parent node key
+// generate next parent node key
 func genNextParentNode(parentNode, key string) string {
 	if len(parentNode) > 0 {
 		return parentNode + "[" + key + "]"
-	} else {
-		return key
 	}
+	return key
 }
 
-//Is Zero-value
+// Is Zero-value
 func isZeroValue(v reflect.Value) bool {
 	switch v.Kind() {
 	case reflect.Bool:

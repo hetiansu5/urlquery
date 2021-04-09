@@ -5,10 +5,10 @@ import (
 	"strconv"
 )
 
-//translator from string to go basic structure
-
+// convert from string to go basic structure
 type valueDecode func(string) (reflect.Value, error)
 
+// convert from string to bool
 func boolDecode(value string) (reflect.Value, error) {
 	b, err := strconv.ParseBool(value)
 	if err != nil {
@@ -18,6 +18,7 @@ func boolDecode(value string) (reflect.Value, error) {
 	return reflect.ValueOf(b), nil
 }
 
+// convert from string to int(8-64)
 func baseIntDecode(value string, bitSize int) (rv reflect.Value, err error) {
 	v, err := strconv.ParseInt(value, 10, bitSize)
 	if err != nil {
@@ -41,12 +42,14 @@ func baseIntDecode(value string, bitSize int) (rv reflect.Value, err error) {
 	return
 }
 
+// convert from string to int(8-64)
 func intDecode(bitSize int) valueDecode {
 	return func(value string) (reflect.Value, error) {
 		return baseIntDecode(value, bitSize)
 	}
 }
 
+// convert from string to uint(8-64)
 func baseUintDecode(value string, bitSize int) (rv reflect.Value, err error) {
 	v, err := strconv.ParseUint(value, 10, bitSize)
 	if err != nil {
@@ -70,12 +73,14 @@ func baseUintDecode(value string, bitSize int) (rv reflect.Value, err error) {
 	return
 }
 
+// convert from string to uint(8-64)
 func uintDecode(bitSize int) valueDecode {
 	return func(value string) (reflect.Value, error) {
 		return baseUintDecode(value, bitSize)
 	}
 }
 
+// convert from string to uintPrt
 func uintPrtDecode(value string) (rv reflect.Value, err error) {
 	v, err := strconv.ParseUint(value, 10, 0)
 	if err != nil {
@@ -85,6 +90,7 @@ func uintPrtDecode(value string) (rv reflect.Value, err error) {
 	return reflect.ValueOf(uintptr(v)), nil
 }
 
+// convert from string to float,double
 func baseFloatDecode(value string, bitSize int) (rv reflect.Value, err error) {
 	v, err := strconv.ParseFloat(value, bitSize)
 	if err != nil {
@@ -102,16 +108,19 @@ func baseFloatDecode(value string, bitSize int) (rv reflect.Value, err error) {
 	return
 }
 
+// convert from string to float
 func floatDecode(bitSize int) valueDecode {
 	return func(value string) (reflect.Value, error) {
 		return baseFloatDecode(value, bitSize)
 	}
 }
 
+// convert from string to string
 func stringDecode(value string) (reflect.Value, error) {
 	return reflect.ValueOf(value), nil
 }
 
+// get decode func for specified reflect kind
 func getDecodeFunc(kind reflect.Kind) valueDecode {
 	switch kind {
 	case reflect.Bool:

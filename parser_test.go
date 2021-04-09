@@ -1,8 +1,8 @@
 package urlquery
 
 import (
-	"testing"
 	"strings"
+	"testing"
 )
 
 type TestParseChild struct {

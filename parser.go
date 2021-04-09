@@ -8,8 +8,7 @@ import (
 	"sync"
 )
 
-//parser from URL Query string to go structure
-
+// parser from URL Query string to go structure
 type parser struct {
 	container     map[string]string
 	err           error
@@ -19,15 +18,18 @@ type parser struct {
 	decodeFuncMap map[reflect.Kind]valueDecode
 }
 
+// new a parser object
+// do some option initialization
 func NewParser(opts ...Option) *parser {
 	p := &parser{}
-	for _, o := range opts {
-		o.apply(&p.opts)
+	for _, option := range opts {
+		option(&p.opts)
 	}
 	p.decodeFuncMap = make(map[reflect.Kind]valueDecode)
 	return p
 }
 
+// handle string data to a map structure for the next parsing
 func (p *parser) init(data []byte) (err error) {
 	arr := bytes.Split(data, []byte(SymbolAnd))
 	for _, value := range arr {
@@ -62,7 +64,7 @@ func (p *parser) init(data []byte) (err error) {
 	return
 }
 
-//reset UrlEncoder
+// reset specified URL-Encoder
 func (p *parser) resetUrlEncoder() {
 	if p.opts.urlEncoder != nil {
 		p.urlEncoder = p.opts.urlEncoder
@@ -71,11 +73,12 @@ func (p *parser) resetUrlEncoder() {
 	}
 }
 
-//generate next parent node key
+// generate next parent node key
 func (p *parser) genNextParentNode(parentNode, key string) string {
 	return genNextParentNode(parentNode, key)
 }
 
+// iteratively parse go structure from string
 func (p *parser) parse(rv reflect.Value, parentNode string) {
 	if p.err != nil {
 		return
@@ -203,6 +206,7 @@ func (p *parser) parse(rv reflect.Value, parentNode string) {
 	}
 }
 
+// parse text to specified-type value, set into rv
 func (p *parser) parseValue(parentNode string, rv reflect.Value) {
 	if !rv.CanSet() {
 		return
@@ -222,6 +226,7 @@ func (p *parser) parseValue(parentNode string, rv reflect.Value) {
 	rv.Set(v)
 }
 
+// parse text to specified-type value
 func (p *parser) decode(typ reflect.Type, value string) (v reflect.Value, err error) {
 	decodeFunc := p.getDecodeFunc(typ.Kind())
 	if decodeFunc == nil {
@@ -231,6 +236,7 @@ func (p *parser) decode(typ reflect.Type, value string) (v reflect.Value, err er
 	return decodeFunc(value)
 }
 
+// get decode function for specified reflect kind
 func (p *parser) getDecodeFunc(kind reflect.Kind) valueDecode {
 	if decodeFunc, ok := p.decodeFuncMap[kind]; ok {
 		return decodeFunc
@@ -238,7 +244,7 @@ func (p *parser) getDecodeFunc(kind reflect.Kind) valueDecode {
 	return getDecodeFunc(kind)
 }
 
-//lookup by prefix match from container variable
+// lookup by prefix matching
 func (p *parser) lookup(prefix string) map[string]bool {
 	data := map[string]bool{}
 	for k, _ := range p.container {
@@ -250,7 +256,7 @@ func (p *parser) lookup(prefix string) map[string]bool {
 	return data
 }
 
-//lookup by prefix match from container variable
+// lookup by prefix matching
 func (p *parser) lookupForSlice(prefix string) map[int]bool {
 	tmp := p.lookup(prefix)
 	data := map[int]bool{}
@@ -265,7 +271,7 @@ func (p *parser) lookupForSlice(prefix string) map[int]bool {
 	return data
 }
 
-//get value by key from container variable which is map struct
+// get value by key from container variable which is map struct
 func (p *parser) get(key string) (string, bool) {
 	v, ok := p.container[key]
 	return v, ok
@@ -276,10 +282,8 @@ func (p *parser) RegisterDecodeFunc(kind reflect.Kind, decode valueDecode) {
 	p.decodeFuncMap[kind] = decode
 }
 
-/**
- * decode string to go structure
- * Thread safety
- */
+// decode string to go structure
+// Thread safety
 func (p *parser) Unmarshal(data []byte, v interface{}) (err error) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
@@ -307,10 +311,8 @@ func (p *parser) Unmarshal(data []byte, v interface{}) (err error) {
 	return p.err
 }
 
-/**
- * decode string to go structure
- * Thread safety
- */
+// decode string to go structure
+// Thread safety
 func Unmarshal(data []byte, v interface{}) error {
 	p := NewParser()
 	return p.Unmarshal(data, v)

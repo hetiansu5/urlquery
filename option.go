@@ -1,36 +1,26 @@
 package urlquery
 
+// options for encoder or parser
 type options struct {
-	urlEncoder       UrlEncoder
+	urlEncoder     UrlEncoder
 	needEmptyValue bool
 }
 
-type Option interface {
-	apply(*options)
-}
+// an func type for applying diff options
+type Option func(*options)
 
-type urlEncoderOption struct {
-	urlEncoder UrlEncoder
-}
-
-func (o urlEncoderOption) apply(opts *options) {
-	opts.urlEncoder = o.urlEncoder
-}
-
-//support customized urlEncoder option
+// support customized URL-Encoder option
 func WithUrlEncoder(u UrlEncoder) Option {
-	return urlEncoderOption{urlEncoder: u}
+	return func(ops *options) {
+		ops.urlEncoder = u
+	}
 }
 
-type NeedEmptyValueOption bool
-
-func (o NeedEmptyValueOption) apply(opts *options) {
-	opts.needEmptyValue = bool(o)
-}
-
-//support to control whether to ignore zero-value.
-//It just happen to the element directly in strcut, not including map slice array
-//default:false, meaning ignore zero-value
+// support to control whether to ignore zero-value.
+// It just happen to the element directly in structure, not including map slice array
+// default:false, meaning ignore zero-value
 func WithNeedEmptyValue(c bool) Option {
-	return NeedEmptyValueOption(c)
+	return func(ops *options) {
+		ops.needEmptyValue = c
+	}
 }

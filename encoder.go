@@ -1,9 +1,9 @@
 package urlquery
 
 import (
+	"bytes"
 	"reflect"
 	"strconv"
-	"bytes"
 	"sync"
 )
 
@@ -12,8 +12,7 @@ const (
 	SymbolAnd   = "&"
 )
 
-//encoder from go structure data to URL Query string
-
+// encoder from go structure data to URL Query string
 type encoder struct {
 	buffer        *bytes.Buffer
 	err           error
@@ -23,16 +22,18 @@ type encoder struct {
 	encodeFuncMap map[reflect.Kind]valueEncode
 }
 
+// new encoder object
+// do some option initialization
 func NewEncoder(opts ...Option) *encoder {
 	b := &encoder{}
-	for _, o := range opts {
-		o.apply(&b.opts)
+	for _, option := range opts {
+		option(&b.opts)
 	}
 	b.encodeFuncMap = make(map[reflect.Kind]valueEncode)
 	return b
 }
 
-//reset UrlEncoder
+// reset UrlEncoder
 func (b *encoder) resetUrlEncoder() {
 	if b.opts.urlEncoder != nil {
 		b.urlEncoder = b.opts.urlEncoder
@@ -41,12 +42,12 @@ func (b *encoder) resetUrlEncoder() {
 	}
 }
 
-//generate next parent node key
+// generate next parent node key
 func (b *encoder) genNextParentNode(parentNode, key string) string {
 	return genNextParentNode(parentNode, key)
 }
 
-//unknown structure need to be detected and handled correctly
+// unknown structure need to be detected and handled correctly
 func (b *encoder) buildQuery(rv reflect.Value, parentNode string, parentKind reflect.Kind) {
 	if b.err != nil {
 		return
@@ -119,7 +120,7 @@ func (b *encoder) buildQuery(rv reflect.Value, parentNode string, parentKind ref
 	}
 }
 
-//basic structure can be translated directly
+// basic structure can be translated directly
 func (b *encoder) appendKeyValue(key string, rv reflect.Value, parentKind reflect.Kind) {
 	//If parent type is struct and empty value will be ignored by default. unless needEmptyValue is true.
 	if parentKind == reflect.Struct && !b.opts.needEmptyValue && isZeroValue(rv) {
@@ -140,6 +141,7 @@ func (b *encoder) appendKeyValue(key string, rv reflect.Value, parentKind reflec
 	b.buffer.WriteString(b.urlEncoder.Escape(key) + SymbolEqual + b.urlEncoder.Escape(s) + SymbolAnd)
 }
 
+// encode a specified-type value to string
 func (b *encoder) encode(rv reflect.Value) (s string, err error) {
 	encodeFunc := b.getEncodeFunc(rv.Kind())
 	if encodeFunc == nil {
@@ -150,6 +152,7 @@ func (b *encoder) encode(rv reflect.Value) (s string, err error) {
 	return
 }
 
+// get encode function for specified reflect kind
 func (b *encoder) getEncodeFunc(kind reflect.Kind) valueEncode {
 	if encodeFunc, ok := b.encodeFuncMap[kind]; ok {
 		return encodeFunc
@@ -157,14 +160,13 @@ func (b *encoder) getEncodeFunc(kind reflect.Kind) valueEncode {
 	return getEncodeFunc(kind)
 }
 
+// register self-defined encode function for any reflect kind
 func (b *encoder) RegisterEncodeFunc(kind reflect.Kind, encode valueEncode) {
 	b.encodeFuncMap[kind] = encode
 }
 
-/**
- * encode go structure to string
- * Thread safety
- */
+// encode go structure to string
+// Thread safety
 func (b *encoder) Marshal(data interface{}) ([]byte, error) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
@@ -187,10 +189,8 @@ func (b *encoder) Marshal(data interface{}) ([]byte, error) {
 	return bs[:len(bs)-1], nil
 }
 
-/**
- * encode go structure to string
- * Thread safety
- */
+// encode go structure to string
+// Thread safety
 func Marshal(data interface{}) ([]byte, error) {
 	b := NewEncoder()
 	return b.Marshal(data)
