@@ -294,6 +294,38 @@ func TestParser_Unmarshal_InitError(t *testing.T) {
 	}
 }
 
+func TestParser_Unmarshal_NonPointer(t *testing.T) {
+	parser := NewParser()
+	var data = "Id=1&b=a"
+	v := TestUnhandled{}
+	err := parser.Unmarshal([]byte(data), v)
+	if _, ok := err.(ErrInvalidUnmarshalError); !ok {
+		t.Error("unmatched error")
+	}
+}
+
+func TestParser_Unmarshal_MapKey_DecodeError(t *testing.T) {
+	parser := NewParser()
+	parser.RegisterDecodeFunc(reflect.String, nil)
+	var data = "Id=1&b=2"
+	v := &map[string]int{}
+	err := parser.Unmarshal([]byte(data), v)
+	if _, ok := err.(ErrUnhandledType); !ok {
+		t.Error("unmatched error")
+	}
+}
+
+func TestParser_Unmarshal_MapValue_DecodeError(t *testing.T) {
+	parser := NewParser()
+	parser.RegisterDecodeFunc(reflect.Int, nil)
+	var data = "Id=1&b=2"
+	v := &map[string]int{}
+	err := parser.Unmarshal([]byte(data), v)
+	if _, ok := err.(ErrUnhandledType); !ok {
+		t.Error("unmatched error")
+	}
+}
+
 func TestParser_RegisterDecodeFunc(t *testing.T) {
 	parser := NewParser()
 	parser.RegisterDecodeFunc(reflect.String, func(s string) (reflect.Value, error) {
@@ -337,6 +369,20 @@ func TestParser_decode_UnhandledType(t *testing.T) {
 	if _, ok := err.(ErrUnhandledType); !ok {
 		t.Error("unmatched error")
 	}
+}
+
+func TestParser_parseForMap_CanSet(t *testing.T) {
+	var x = 3.4
+	v := reflect.ValueOf(x)
+	parser := NewParser()
+	parser.parseForMap(v, "")
+}
+
+func TestParser_parseForSlice_CanSet(t *testing.T) {
+	var x = 3.4
+	v := reflect.ValueOf(x)
+	parser := NewParser()
+	parser.parseForSlice(v, "")
 }
 
 //mock multi-layer nested structure,

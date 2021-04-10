@@ -67,6 +67,14 @@ func Test_genNextParentNode(t *testing.T) {
 	}
 }
 
+func Test_isZeroValue_Bool(t *testing.T) {
+	var a bool
+	res := isZeroValue(reflect.ValueOf(a))
+	if res != true {
+		t.Error("isZeroValue is error for bool")
+	}
+}
+
 func Test_isZeroValue_Complex(t *testing.T) {
 	var a complex64
 	res := isZeroValue(reflect.ValueOf(a))

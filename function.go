@@ -81,7 +81,6 @@ func genNextParentNode(parentNode, key string) string {
 
 // check if value is zero-value
 func isZeroValue(v reflect.Value) bool {
-	v.IsZero()
 	switch v.Kind() {
 	case reflect.Bool:
 		return !v.Bool()

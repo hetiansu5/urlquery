@@ -1,6 +1,7 @@
 package urlquery
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -51,5 +52,12 @@ func Test_baseUintPrtDecode_Error(t *testing.T) {
 	_, err := uintPrtDecode("d2")
 	if _, ok := err.(ErrTranslated); !ok {
 		t.Error("unexpected error type")
+	}
+}
+
+func Test_getDecodeFunc_Nil(t *testing.T) {
+	v := getDecodeFunc(reflect.Chan)
+	if v != nil {
+		t.Error("getDecodeFunc of reflect.Chan should return nil")
 	}
 }

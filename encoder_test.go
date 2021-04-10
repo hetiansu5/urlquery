@@ -1,6 +1,7 @@
 package urlquery
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -96,13 +97,10 @@ func TestEncoder_Marshal_NilPtr_Struct(t *testing.T) {
 
 func TestEncoder_Marshal_Slice(t *testing.T) {
 	data := []string{"a", "b"}
-
 	bytes, err := Marshal(data)
-
 	if err != nil {
 		t.Error(err)
 	}
-
 	if string(bytes) != "0=a&1=b" {
 		t.Error("failed to Marshal slice")
 	}
@@ -110,13 +108,10 @@ func TestEncoder_Marshal_Slice(t *testing.T) {
 
 func TestEncoder_Marshal_Array(t *testing.T) {
 	data := [3]int32{10, 200, 50}
-
 	bytes, err := Marshal(data)
-
 	if err != nil {
 		t.Error(err)
 	}
-
 	if string(bytes) != "0=10&1=200&2=50" {
 		t.Error("failed to Marshal slice")
 	}
@@ -180,6 +175,15 @@ func TestEncoder_Marshal_ErrInvalidMapKeyType(t *testing.T) {
 	}
 	_, err := encoder.Marshal(data)
 	if _, ok := err.(ErrInvalidMapKeyType); !ok {
+		t.Error("unmatched error")
+	}
+}
+
+func TestEncoder_buildQuery_ReturnError(t *testing.T) {
+	encoder := NewEncoder()
+	encoder.err = errors.New("return")
+	encoder.buildQuery(reflect.ValueOf("s"), "", reflect.Int)
+	if encoder.err == nil || encoder.err.Error() != "return" {
 		t.Error("unmatched error")
 	}
 }
