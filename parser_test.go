@@ -1,43 +1,63 @@
 package urlquery
 
 import (
+	"errors"
+	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 )
 
-type TestParseChild struct {
+type testParseChild struct {
 	Description string `query:"desc"`
 	Long        uint16 `query:",vip"`
 	Height      int    `query:"-"`
 }
 
-type TestParseInfo struct {
+type testParseInfo struct {
 	Id       int
 	Name     string           `query:"name"`
-	Child    TestParseChild   `query:"child"`
-	ChildPtr *TestParseChild  `query:"childPtr"`
-	Children []TestParseChild `query:"children"`
+	Child    testParseChild   `query:"child"`
+	ChildPtr *testParseChild  `query:"childPtr"`
+	Children []testParseChild `query:"children"`
 	Params   map[byte]int8
 	status   bool
 	UintPtr  uintptr
-	Int16    int16
+	Tags     []int16 `query:"tags"`
 	Int64    int64
 	Uint     uint
 	Uint32   uint32
 	Float32  float32
 	Float64  float64
 	Bool     bool
+	Inter    interface{} `query:"inter"`
 }
 
-func TestUnmarshal_DuplicateCall(t *testing.T) {
+type errorQueryEncoder struct {
+	times   int
+	errorAt int
+}
+
+func (q *errorQueryEncoder) Escape(s string) string {
+	return s
+}
+func (q *errorQueryEncoder) UnEscape(s string) (string, error) {
+	q.times++
+	if q.times >= q.errorAt {
+		return "", errors.New("failed")
+	}
+	return s, nil
+}
+
+func TestParser_Unmarshal_DuplicateCall(t *testing.T) {
 	parser := NewParser()
 
 	d1 := "desc=bb&Long=200"
-	v1 := &TestParseChild{}
-	parser.Unmarshal([]byte(d1), v1)
+	v1 := &testParseChild{}
+	_ = parser.Unmarshal([]byte(d1), v1)
 
 	d2 := "desc=a&Long=100"
-	v2 := &TestParseChild{}
+	v2 := &testParseChild{}
 	err := parser.Unmarshal([]byte(d2), v2)
 	if err != nil {
 		t.Error(err)
@@ -47,13 +67,13 @@ func TestUnmarshal_DuplicateCall(t *testing.T) {
 	}
 }
 
-func TestUnmarshal_NestedStructure(t *testing.T) {
+func TestParser_Unmarshal_NestedStructure(t *testing.T) {
 	var data = "Id=1&name=test&child[desc]=c1&child[Long]=10&childPtr[Long]=2&childPtr[Description]=b" +
 		"&children[0][desc]=d1&children[1][Long]=12&children[5][desc]=d5&children[5][Long]=50&desc=rtt" +
-		"&Params[120]=1&Params[121]=2&status=1&UintPtr=300&Int16=1&Int64=64&Uint=22&Uint32=5&Float32=1.3" +
-		"&Float64=5.64&Bool=0"
+		"&Params[120]=1&Params[121]=2&status=1&UintPtr=300&tags[]=1&tags[]=2&Int64=64&Uint=22&Uint32=5&Float32=1.3" +
+		"&Float64=5.64&Bool=0&inter=ss"
 	data = encodeSquareBracket(data)
-	v := &TestParseInfo{}
+	v := &testParseInfo{}
 	err := Unmarshal([]byte(data), v)
 
 	if err != nil {
@@ -107,9 +127,13 @@ func TestUnmarshal_NestedStructure(t *testing.T) {
 	if v.UintPtr != uintptr(300) {
 		t.Error("UintPtr wrong")
 	}
+
+	if len(v.Tags) != 2 {
+		t.Error("Tags wrong")
+	}
 }
 
-func TestUnmarshal_Map(t *testing.T) {
+func TestParser_Unmarshal_Map(t *testing.T) {
 	var m map[string]string
 	data := "id=1&name=ab&arr[0]=6d"
 	data = encodeSquareBracket(data)
@@ -133,7 +157,7 @@ func TestUnmarshal_Map(t *testing.T) {
 	}
 }
 
-func TestUnmarshal_Slice(t *testing.T) {
+func TestParser_Unmarshal_Slice(t *testing.T) {
 	var slice []int
 	slice = make([]int, 0)
 	data := "1=20&3=30"
@@ -148,7 +172,7 @@ func TestUnmarshal_Slice(t *testing.T) {
 	}
 }
 
-func TestUnmarshal_Array(t *testing.T) {
+func TestParser_Unmarshal_Array(t *testing.T) {
 	var arr [5]int
 	data := "1=20&3=30"
 	err := Unmarshal([]byte(data), &arr)
@@ -162,17 +186,27 @@ func TestUnmarshal_Array(t *testing.T) {
 	}
 }
 
-type TestParserPoint struct {
+func TestParser_Unmarshal_Array_Failed(t *testing.T) {
+	var arr [5]int
+	data := "1=20&3=s"
+	err := Unmarshal([]byte(data), &arr)
+
+	if err == nil {
+		t.Error("dont return error")
+	}
+}
+
+type testParserPoint struct {
 	X, Y int
 }
 
-type TestParserCircle struct {
-	TestParserPoint
+type testParserCircle struct {
+	testParserPoint
 	R int
 }
 
-func TestUnmarshal_AnonymousFields(t *testing.T) {
-	v := &TestParserCircle{}
+func TestParser_Unmarshal_AnonymousFields(t *testing.T) {
+	v := &testParserCircle{}
 	data := "X=12&Y=13&R=1"
 	err := Unmarshal([]byte(data), &v)
 
@@ -185,15 +219,15 @@ func TestUnmarshal_AnonymousFields(t *testing.T) {
 	}
 }
 
-type TestFormat struct {
+type testFormat struct {
 	Id uint64
 	B  rune `query:"b"`
 }
 
-func TestUnmarshal_UnmatchedDataFormat(t *testing.T) {
+func TestParser_Unmarshal_UnmatchedDataFormat(t *testing.T) {
 	var data = "Id=1&b=a"
 	data = encodeSquareBracket(data)
-	v := &TestFormat{}
+	v := &testFormat{}
 	err := Unmarshal([]byte(data), v)
 
 	if err == nil {
@@ -204,7 +238,7 @@ func TestUnmarshal_UnmatchedDataFormat(t *testing.T) {
 	}
 }
 
-func TestUnmarshal_UnhandledType(t *testing.T) {
+func TestParser_Unmarshal_UnhandledType(t *testing.T) {
 	var data = "Id=1&b=a"
 	data = encodeSquareBracket(data)
 	v := &map[interface{}]string{}
@@ -220,20 +254,88 @@ func TestUnmarshal_UnhandledType(t *testing.T) {
 
 type TestUnhandled struct {
 	Id     int
-	Params map[string]TestFormat
+	Params map[string]testFormat
 }
 
-func TestUnmarshal_UnhandledType2(t *testing.T) {
+func TestParser_Unmarshal_UnhandledType2(t *testing.T) {
 	var data = "Id=1&b=a"
 	data = encodeSquareBracket(data)
 	v := &TestUnhandled{}
-	err := Unmarshal([]byte(data), v)
+	parser := NewParser(WithQueryEncoder(defaultQueryEncoder))
+	err := parser.Unmarshal([]byte(data), v)
 
 	if err == nil {
 		t.Error("error should not be ignored")
 	}
 	if _, ok := err.(ErrInvalidMapKeyType); !ok {
 		t.Errorf("error type is unexpected. %v", err)
+	}
+}
+
+func TestParser_init(t *testing.T) {
+	query := &errorQueryEncoder{errorAt: 1}
+	parser := NewParser(WithQueryEncoder(query))
+	parser.resetQueryEncoder()
+	var data = "Id=1&b=a"
+	err := parser.init([]byte(data))
+	if err == nil || err.Error() != "failed" {
+		t.Error("init error")
+	}
+}
+
+func TestParser_Unmarshal_InitError(t *testing.T) {
+	query := &errorQueryEncoder{errorAt: 2}
+	parser := NewParser(WithQueryEncoder(query))
+	v := &TestUnhandled{}
+	var data = "Id=1&b=a"
+	err := parser.Unmarshal([]byte(data), v)
+	if err == nil || err.Error() != "failed" {
+		t.Error("init error")
+	}
+}
+
+func TestParser_RegisterDecodeFunc(t *testing.T) {
+	parser := NewParser()
+	parser.RegisterDecodeFunc(reflect.String, func(s string) (reflect.Value, error) {
+		return reflect.ValueOf("11"), nil
+	})
+	f := parser.getDecodeFunc(reflect.String)
+	v, _ := f("bb")
+	if v.String() != "11" {
+		t.Error("failed to RegisterDecodeFunc")
+	}
+}
+
+func TestParser_lookupForSlice(t *testing.T) {
+	var data = "Tags[s]=1&Tags[]=2"
+	data = encodeSquareBracket(data)
+	v := &struct {
+		Tags []int
+	}{}
+	err := Unmarshal([]byte(data), v)
+	if _, ok := err.(*strconv.NumError); !ok {
+		t.Error("dont failed for wrong slice data")
+	}
+}
+
+func TestParser_SliceEmpty(t *testing.T) {
+	var data = ""
+	data = encodeSquareBracket(data)
+	v := &struct {
+		Tags []int
+	}{}
+	_ = Unmarshal([]byte(data), v)
+	if len(v.Tags) != 0 {
+		t.Error("not empty slice")
+	}
+}
+
+func TestParser_decode_UnhandledType(t *testing.T) {
+	parser := NewParser()
+	parser.RegisterDecodeFunc(reflect.String, nil)
+	_, err := parser.decode(reflect.TypeOf(""), "s")
+	if _, ok := err.(ErrUnhandledType); !ok {
+		t.Error("unmatched error")
 	}
 }
 
@@ -246,7 +348,7 @@ func BenchmarkUnmarshal(b *testing.B) {
 	data = encodeSquareBracket(data)
 
 	for i := 0; i < b.N; i++ {
-		v := &TestParseInfo{}
+		v := &testParseInfo{}
 		err := Unmarshal([]byte(data), v)
 		if err != nil {
 			b.Error(err)

@@ -176,8 +176,11 @@ func (p *parser) parseForSlice(rv reflect.Value, parentNode string) {
 	}
 
 	//lookup matched map data with prefix key
-	matches := p.lookupForSlice(parentNode)
-	if len(matches) == 0 {
+	matches, err := p.lookupForSlice(parentNode)
+	if err != nil {
+		p.err = err
+		return
+	} else if len(matches) == 0 {
 		return
 	}
 
@@ -277,18 +280,17 @@ func (p *parser) lookup(prefix string) map[string]bool {
 }
 
 // lookup by prefix matching
-func (p *parser) lookupForSlice(prefix string) map[int]bool {
+func (p *parser) lookupForSlice(prefix string) (map[int]bool, error) {
 	tmp := p.lookup(prefix)
 	data := map[int]bool{}
 	for k := range tmp {
 		i, err := strconv.Atoi(k)
 		if err != nil {
-			p.err = err
-			break
+			return nil, err
 		}
 		data[i] = true
 	}
-	return data
+	return data, nil
 }
 
 // get value by key from container variable which is map struct

@@ -7,24 +7,24 @@ import (
 	"testing"
 )
 
-type BuilderChild struct {
+type builderChild struct {
 	Description string `query:"desc"`
 	Long        uint16 `query:",vip"`
 	Height      int    `query:"-"`
 }
 
-type BuilderInfo struct {
+type builderInfo struct {
 	Id       int
 	Name     string         `query:"name"`
-	Child    BuilderChild   `query:"child"`
-	ChildPtr *BuilderChild  `query:"childPtr"`
-	Children []BuilderChild `query:"children"`
+	Child    builderChild   `query:"child"`
+	ChildPtr *builderChild  `query:"childPtr"`
+	Children []builderChild `query:"children"`
 	Params   map[string]rune
 	status   bool
 	UintPtr  uintptr
 }
 
-func TestMarshal(t *testing.T) {
+func TestEncoder_Marshal(t *testing.T) {
 	data := getMockData()
 
 	SetGlobalQueryEncoder(defaultQueryEncoder)
@@ -36,7 +36,7 @@ func TestMarshal(t *testing.T) {
 	}
 }
 
-func TestMarshal_Struct(t *testing.T) {
+func TestEncoder_Marshal_Struct(t *testing.T) {
 	data := getMockData2()
 
 	encoder := NewEncoder(WithQueryEncoder(DefaultQueryEncoder{}), WithNeedEmptyValue(false))
@@ -47,7 +47,7 @@ func TestMarshal_Struct(t *testing.T) {
 		return
 	}
 
-	v := BuilderInfo{}
+	v := builderInfo{}
 	err = Unmarshal(bytes, &v)
 	if err != nil {
 		t.Error(err)
@@ -61,7 +61,7 @@ func TestMarshal_Struct(t *testing.T) {
 	}
 }
 
-func TestMarshal_NilPtr_Struct(t *testing.T) {
+func TestEncoder_Marshal_NilPtr_Struct(t *testing.T) {
 	data := getMockData3()
 
 	bytes, err := Marshal(data)
@@ -71,7 +71,7 @@ func TestMarshal_NilPtr_Struct(t *testing.T) {
 		return
 	}
 
-	v := BuilderInfo{}
+	v := builderInfo{}
 	err = Unmarshal(bytes, &v)
 	if err != nil {
 		t.Error(err)
@@ -94,7 +94,7 @@ func TestMarshal_NilPtr_Struct(t *testing.T) {
 	}
 }
 
-func TestMarshal_Slice(t *testing.T) {
+func TestEncoder_Marshal_Slice(t *testing.T) {
 	data := []string{"a", "b"}
 
 	bytes, err := Marshal(data)
@@ -108,7 +108,7 @@ func TestMarshal_Slice(t *testing.T) {
 	}
 }
 
-func TestMarshal_Array(t *testing.T) {
+func TestEncoder_Marshal_Array(t *testing.T) {
 	data := [3]int32{10, 200, 50}
 
 	bytes, err := Marshal(data)
@@ -131,7 +131,7 @@ type TestCircle struct {
 	R int
 }
 
-func TestMarshal_AnonymousFields(t *testing.T) {
+func TestEncoder_Marshal_AnonymousFields(t *testing.T) {
 	data := &TestCircle{R: 1}
 	data.TestPoint.X = 12
 	data.TestPoint.Y = 13
@@ -146,8 +146,8 @@ func TestMarshal_AnonymousFields(t *testing.T) {
 	}
 }
 
-func TestMarshal_DuplicateCall(t *testing.T) {
-	d1 := BuilderChild{
+func TestEncoder_Marshal_DuplicateCall(t *testing.T) {
+	d1 := builderChild{
 		Description: "a",
 		Long:        10,
 	}
@@ -156,9 +156,9 @@ func TestMarshal_DuplicateCall(t *testing.T) {
 	encoder.RegisterEncodeFunc(reflect.Int64, func(value reflect.Value) string {
 		return strconv.FormatInt(value.Int(), 10)
 	})
-	encoder.Marshal(d1)
+	_, _ = encoder.Marshal(d1)
 
-	d2 := BuilderChild{
+	d2 := builderChild{
 		Description: "bb",
 		Long:        200,
 	}
@@ -173,6 +173,17 @@ func TestMarshal_DuplicateCall(t *testing.T) {
 	}
 }
 
+func TestEncoder_Marshal_ErrInvalidMapKeyType(t *testing.T) {
+	encoder := NewEncoder()
+	data := map[complex64]int{
+		complex(1, 2): 23,
+	}
+	_, err := encoder.Marshal(data)
+	if _, ok := err.(ErrInvalidMapKeyType); !ok {
+		t.Error("unmatched error")
+	}
+}
+
 func TestEncoder_encodeError(t *testing.T) {
 	encoder := NewEncoder()
 	data := map[string]complex64{
@@ -180,7 +191,28 @@ func TestEncoder_encodeError(t *testing.T) {
 	}
 	_, err := encoder.Marshal(data)
 	if _, ok := err.(ErrUnhandledType); !ok {
-		t.Error("it is not ErrUnhandledType")
+		t.Error("unmatched error")
+	}
+}
+
+func TestEncoder_encodeError2(t *testing.T) {
+	encoder := NewEncoder()
+	data := map[string]int{
+		"d": 1,
+	}
+	encoder.RegisterEncodeFunc(reflect.String, nil)
+	_, err := encoder.Marshal(data)
+	if _, ok := err.(ErrUnhandledType); !ok {
+		t.Error("unmatched error")
+	}
+}
+
+func TestEncoder_RegisterEncodeFunc(t *testing.T) {
+	encoder := NewEncoder()
+	encoder.RegisterEncodeFunc(reflect.Int, nil)
+	f := encoder.getEncodeFunc(reflect.Int)
+	if f != nil {
+		t.Error("failed to RegisterEncodeFunc")
 	}
 }
 
@@ -219,25 +251,25 @@ func getMockData() map[string]interface{} {
 			5:         []int{11, 22},
 			"child":   getMockData2(),
 		},
-		"struct": BuilderInfo{
+		"struct": builderInfo{
 			Id:   222,
 			Name: "test",
 		},
 	}
 }
 
-func getMockData2() BuilderInfo {
-	return BuilderInfo{
+func getMockData2() builderInfo {
+	return builderInfo{
 		Name: "child",
-		Children: []BuilderChild{
+		Children: []builderChild{
 			{Description: "d1", Height: 180},
 			{Description: "d2", Long: 140},
 			{Description: "d4"},
 			{Description: "d5", Long: 1, Height: 20},
 			{Description: "d6"},
 		},
-		Child:    BuilderChild{Description: "c1", Height: 20},
-		ChildPtr: &BuilderChild{Description: "cptr", Long: 14, Height: 220},
+		Child:    builderChild{Description: "c1", Height: 20},
+		ChildPtr: &builderChild{Description: "cptr", Long: 14, Height: 220},
 		Params: map[string]rune{
 			"abc":      111,
 			"bbb":      222,
@@ -248,17 +280,17 @@ func getMockData2() BuilderInfo {
 	}
 }
 
-func getMockData3() BuilderInfo {
-	return BuilderInfo{
+func getMockData3() builderInfo {
+	return builderInfo{
 		Name: "child3",
-		Children: []BuilderChild{
+		Children: []builderChild{
 			{Description: "d31", Height: 180},
 			{Description: "d32", Long: 140},
 			{Description: "d34"},
 			{Description: "d35", Long: 1, Height: 20},
 			{Description: "d36"},
 		},
-		Child:    BuilderChild{},
+		Child:    builderChild{},
 		ChildPtr: nil,
 		Params:   nil,
 		status:   true,
