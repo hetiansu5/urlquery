@@ -198,6 +198,9 @@ func (b *encoder) Marshal(data interface{}) ([]byte, error) {
 	//release resource
 	b.buffer = nil
 	//do not forget to remove the last & character
+	if len(bs) == 0 {
+		return bs, nil
+	}
 	return bs[:len(bs)-1], nil
 }
 
